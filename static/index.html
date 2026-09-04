@@ -3,22 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estação Meteorológica</title>
+<title>Estação Meteorológica — Cristo Rei</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #f0f4f8;
+  --cr-navy: #1b3a6b;
+  --cr-teal: #0a7e72;
+  --cr-orange: #f07020;
+  --cr-green: #3a9e3f;
+  --cr-gold: #d4a017;
+  --bg: #f4f6fa;
   --card: #ffffff;
   --text: #1a202c;
-  --text-muted: #718096;
-  --border: #e2e8f0;
-  --temp-color: #e53e3e;
-  --umid-color: #3182ce;
-  --pres-color: #38a169;
-  --temp-bg: #fff5f5;
-  --umid-bg: #ebf8ff;
-  --pres-bg: #f0fff4;
-  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --text-muted: #5a6a7e;
+  --border: #dce3ed;
+  --temp-color: #d04040;
+  --umid-color: #2874a6;
+  --pres-color: #1e8449;
+  --temp-bg: #fef5f5;
+  --umid-bg: #eef6fb;
+  --pres-bg: #eef8f0;
+  --shadow: 0 2px 6px rgba(27,58,107,0.08);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,14 +35,39 @@ body {
   min-height: 100vh;
 }
 
+/* ── Header institucional ─────────────────────────── */
 .header {
-  background: linear-gradient(135deg, #2b6cb0, #2c7a7b);
+  background: linear-gradient(135deg, var(--cr-navy) 0%, #163058 50%, var(--cr-teal) 100%);
   color: white;
-  padding: 1.2rem 1rem;
+  padding: 1rem 1rem 0.8rem;
   text-align: center;
+  position: relative;
 }
-.header h1 { font-size: 1.3rem; font-weight: 600; }
-.header .subtitle { font-size: 0.8rem; opacity: 0.85; margin-top: 0.2rem; }
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cr-orange), var(--cr-gold), var(--cr-green), var(--cr-teal));
+}
+.header-school {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+  margin-bottom: 0.25rem;
+}
+.header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.header .subtitle {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+  font-style: italic;
+}
 
 .status-bar {
   display: flex;
@@ -54,8 +84,9 @@ body {
   width: 8px; height: 8px;
   border-radius: 50%;
   background: #a0aec0;
+  flex-shrink: 0;
 }
-.status-dot.online { background: #38a169; animation: pulse 2s infinite; }
+.status-dot.online { background: var(--cr-green); animation: pulse 2s infinite; }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -74,7 +105,7 @@ body {
 .card {
   background: var(--card);
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1rem 0.5rem;
   text-align: center;
   box-shadow: var(--shadow);
   transition: transform 0.2s;
@@ -82,9 +113,9 @@ body {
 .card:active { transform: scale(0.97); }
 
 .card-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
-.card-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.card-value { font-size: 1.8rem; font-weight: 700; margin: 0.2rem 0; }
-.card-unit { font-size: 0.8rem; color: var(--text-muted); }
+.card-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+.card-value { font-size: 1.8rem; font-weight: 700; margin: 0.2rem 0; font-variant-numeric: tabular-nums; }
+.card-unit { font-size: 0.78rem; color: var(--text-muted); }
 
 .card.temp { border-top: 3px solid var(--temp-color); background: var(--temp-bg); }
 .card.temp .card-value { color: var(--temp-color); }
@@ -118,6 +149,7 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Gráficos ───────────────────────────────────────── */
@@ -163,9 +195,9 @@ canvas { width: 100% !important; }
   transition: all 0.2s;
 }
 .btn.active {
-  background: #2b6cb0;
+  background: var(--cr-navy);
   color: white;
-  border-color: #2b6cb0;
+  border-color: var(--cr-navy);
 }
 
 /* ── Tendência de pressão ───────────────────────────── */
@@ -185,11 +217,23 @@ canvas { width: 100% !important; }
 /* ── Footer ─────────────────────────────────────────── */
 .footer {
   text-align: center;
-  padding: 1rem;
-  font-size: 0.7rem;
+  padding: 1rem 1rem 0.5rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
 }
-.footer a { color: #2b6cb0; text-decoration: none; }
+.footer a { color: var(--cr-teal); text-decoration: none; font-weight: 500; }
+.footer-credit {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.footer-credit strong {
+  color: var(--cr-navy);
+  font-weight: 600;
+}
 
 /* ── Responsivo ─────────────────────────────────────── */
 @media (max-width: 400px) {
@@ -201,8 +245,9 @@ canvas { width: 100% !important; }
 <body>
 
 <div class="header">
-  <h1>🌤️ Estação Meteorológica</h1>
-  <div class="subtitle">Colégio Franciscano Cristo Rei</div>
+  <div class="header-school">Colégio Franciscano Cristo Rei</div>
+  <h1>Estação Meteorológica</h1>
+  <div class="subtitle">Monitoramento ambiental em tempo real</div>
 </div>
 
 <div class="status-bar">
@@ -292,56 +337,56 @@ canvas { width: 100% !important; }
 
 <div class="footer">
   <a href="/api/exportar?horas=24">📥 Baixar dados (CSV)</a> · Atualização a cada 10s
+  <div class="footer-credit">
+    <strong>Professor Regente:</strong> Dr. José Ricardo Faccin<br>
+    Turma 9º Ano — 2026<br>
+    Colégio Franciscano Cristo Rei · Marau, RS
+  </div>
 </div>
 
 <script>
-// ── Configuração dos gráficos ────────────────────────
-const chartDefaults = {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: { duration: 400 },
-  plugins: { legend: { display: false } },
-  scales: {
-    x: {
-      ticks: { maxTicksToShow: 6, font: { size: 10 }, maxRotation: 0 },
-      grid: { display: false }
-    },
-    y: { ticks: { font: { size: 10 } }, grid: { color: '#e2e8f020' } }
-  },
-  elements: {
-    point: { radius: 0, hitRadius: 10 },
-    line: { tension: 0.3, borderWidth: 2 }
-  }
-};
-
-function criarChart(canvasId, cor, label) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-  gradient.addColorStop(0, cor + '30');
-  gradient.addColorStop(1, cor + '05');
-
-  return new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [{
-        label: label,
-        data: [],
-        borderColor: cor,
-        backgroundColor: gradient,
-        fill: true
-      }]
-    },
-    options: { ...chartDefaults }
-  });
-}
-
-const chartTemp = criarChart('chartTemp', '#e53e3e', 'Temperatura');
-const chartUmid = criarChart('chartUmid', '#3182ce', 'Umidade');
-const chartPres = criarChart('chartPres', '#38a169', 'Pressão');
-
 // ── Estado ────────────────────────────────────────────
 let periodoHoras = 1;
+let chartTemp = null, chartUmid = null, chartPres = null;
+
+// ── Gráficos (só se Chart.js carregou) ───────────────
+try {
+  if (typeof Chart !== 'undefined') {
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { maxTicksToShow: 6, font: { size: 10 }, maxRotation: 0 },
+          grid: { display: false }
+        },
+        y: { ticks: { font: { size: 10 } }, grid: { color: '#dce3ed40' } }
+      },
+      elements: {
+        point: { radius: 0, hitRadius: 10 },
+        line: { tension: 0.3, borderWidth: 2 }
+      }
+    };
+
+    function criarChart(canvasId, cor, label) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+      gradient.addColorStop(0, cor + '30');
+      gradient.addColorStop(1, cor + '05');
+      return new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: label, data: [], borderColor: cor, backgroundColor: gradient, fill: true }] },
+        options: { ...chartDefaults }
+      });
+    }
+
+    chartTemp = criarChart('chartTemp', '#d04040', 'Temperatura');
+    chartUmid = criarChart('chartUmid', '#2874a6', 'Umidade');
+    chartPres = criarChart('chartPres', '#1e8449', 'Pressão');
+  }
+} catch (e) { console.warn('Chart.js não disponível:', e); }
 
 // ── Formatação de hora ───────────────────────────────
 function formatarHora(isoString) {
@@ -397,17 +442,23 @@ async function atualizarGraficos() {
     const umids = dados.map(d => d.umidade);
     const press = dados.map(d => d.pressao);
 
-    chartTemp.data.labels = labels;
-    chartTemp.data.datasets[0].data = temps;
-    chartTemp.update('none');
+    if (chartTemp) {
+      chartTemp.data.labels = labels;
+      chartTemp.data.datasets[0].data = temps;
+      chartTemp.update('none');
+    }
 
-    chartUmid.data.labels = labels;
-    chartUmid.data.datasets[0].data = umids;
-    chartUmid.update('none');
+    if (chartUmid) {
+      chartUmid.data.labels = labels;
+      chartUmid.data.datasets[0].data = umids;
+      chartUmid.update('none');
+    }
 
-    chartPres.data.labels = labels;
-    chartPres.data.datasets[0].data = press;
-    chartPres.update('none');
+    if (chartPres) {
+      chartPres.data.labels = labels;
+      chartPres.data.datasets[0].data = press;
+      chartPres.update('none');
+    }
 
     // Tendência de pressão (últimas 3h vs última leitura)
     calcularTendencia(press);
