@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estação Meteorológica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --text: #1a202c;
+  --text-muted: #718096;
+  --border: #e2e8f0;
+  --temp-color: #e53e3e;
+  --umid-color: #3182ce;
+  --pres-color: #38a169;
+  --temp-bg: #fff5f5;
+  --umid-bg: #ebf8ff;
+  --pres-bg: #f0fff4;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #2b6cb0, #2c7a7b);
+  color: white;
+  padding: 1.2rem 1rem;
+  text-align: center;
+}
+.header h1 { font-size: 1.3rem; font-weight: 600; }
+.header .subtitle { font-size: 0.8rem; opacity: 0.85; margin-top: 0.2rem; }
+
+.status-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #a0aec0;
+}
+.status-dot.online { background: #38a169; animation: pulse 2s infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Cards de leitura atual ─────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+.card:active { transform: scale(0.97); }
+
+.card-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.card-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.card-value { font-size: 1.8rem; font-weight: 700; margin: 0.2rem 0; }
+.card-unit { font-size: 0.8rem; color: var(--text-muted); }
+
+.card.temp { border-top: 3px solid var(--temp-color); background: var(--temp-bg); }
+.card.temp .card-value { color: var(--temp-color); }
+.card.umid { border-top: 3px solid var(--umid-color); background: var(--umid-bg); }
+.card.umid .card-value { color: var(--umid-color); }
+.card.pres { border-top: 3px solid var(--pres-color); background: var(--pres-bg); }
+.card.pres .card-value { color: var(--pres-color); }
+
+/* ── Estatísticas ───────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.stat-box {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.stat-box .min-max {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Gráficos ───────────────────────────────────────── */
+.chart-section {
+  padding: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.chart-container {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: var(--shadow);
+}
+.chart-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+canvas { width: 100% !important; }
+
+/* ── Controles ──────────────────────────────────────── */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn.active {
+  background: #2b6cb0;
+  color: white;
+  border-color: #2b6cb0;
+}
+
+/* ── Tendência de pressão ───────────────────────────── */
+.tendencia {
+  text-align: center;
+  padding: 0.5rem;
+  margin: 0 0.75rem;
+  max-width: 800px;
+  margin-left: auto; margin-right: auto;
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.8rem;
+}
+.tendencia .icone { font-size: 1.5rem; }
+
+/* ── Footer ─────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.footer a { color: #2b6cb0; text-decoration: none; }
+
+/* ── Responsivo ─────────────────────────────────────── */
+@media (max-width: 400px) {
+  .card-value { font-size: 1.4rem; }
+  .cards { gap: 0.5rem; padding: 0.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌤️ Estação Meteorológica</h1>
+  <div class="subtitle">Colégio Franciscano Cristo Rei</div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Conectando...</span>
+</div>
+
+<!-- Leituras atuais -->
+<div class="cards">
+  <div class="card temp">
+    <div class="card-icon">🌡️</div>
+    <div class="card-label">Temperatura</div>
+    <div class="card-value" id="tempAtual">--</div>
+    <div class="card-unit">°C</div>
+  </div>
+  <div class="card umid">
+    <div class="card-icon">💧</div>
+    <div class="card-label">Umidade</div>
+    <div class="card-value" id="umidAtual">--</div>
+    <div class="card-unit">%</div>
+  </div>
+  <div class="card pres">
+    <div class="card-icon">🔽</div>
+    <div class="card-label">Pressão</div>
+    <div class="card-value" id="presAtual">--</div>
+    <div class="card-unit">hPa</div>
+  </div>
+</div>
+
+<!-- Min/Max (24h) -->
+<div class="stats">
+  <div class="stat-box">
+    <div>Temp 24h</div>
+    <div class="min-max">
+      <span>↓ <span id="tempMin">--</span></span>
+      <span>↑ <span id="tempMax">--</span></span>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div>Umid 24h</div>
+    <div class="min-max">
+      <span>↓ <span id="umidMin">--</span></span>
+      <span>↑ <span id="umidMax">--</span></span>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div>Pressão 24h</div>
+    <div class="min-max">
+      <span>↓ <span id="presMin">--</span></span>
+      <span>↑ <span id="presMax">--</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Tendência de pressão -->
+<div style="padding: 0.75rem; max-width: 800px; margin: 0 auto;">
+  <div class="tendencia">
+    <span class="icone" id="tendenciaIcone">⏳</span>
+    <div id="tendenciaTexto">Calculando tendência...</div>
+  </div>
+</div>
+
+<!-- Seletor de período -->
+<div class="controls">
+  <button class="btn active" data-horas="1">1h</button>
+  <button class="btn" data-horas="3">3h</button>
+  <button class="btn" data-horas="6">6h</button>
+  <button class="btn" data-horas="12">12h</button>
+  <button class="btn" data-horas="24">24h</button>
+</div>
+
+<!-- Gráficos -->
+<div class="chart-section">
+  <div class="chart-container">
+    <div class="chart-title">🌡️ Temperatura (°C)</div>
+    <canvas id="chartTemp" height="180"></canvas>
+  </div>
+  <div class="chart-container">
+    <div class="chart-title">💧 Umidade (%)</div>
+    <canvas id="chartUmid" height="180"></canvas>
+  </div>
+  <div class="chart-container">
+    <div class="chart-title">📊 Pressão (hPa)</div>
+    <canvas id="chartPres" height="180"></canvas>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="/api/exportar?horas=24">📥 Baixar dados (CSV)</a> · Atualização a cada 10s
+</div>
+
+<script>
+// ── Configuração dos gráficos ────────────────────────
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 400 },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: {
+      ticks: { maxTicksToShow: 6, font: { size: 10 }, maxRotation: 0 },
+      grid: { display: false }
+    },
+    y: { ticks: { font: { size: 10 } }, grid: { color: '#e2e8f020' } }
+  },
+  elements: {
+    point: { radius: 0, hitRadius: 10 },
+    line: { tension: 0.3, borderWidth: 2 }
+  }
+};
+
+function criarChart(canvasId, cor, label) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, cor + '30');
+  gradient.addColorStop(1, cor + '05');
+
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: label,
+        data: [],
+        borderColor: cor,
+        backgroundColor: gradient,
+        fill: true
+      }]
+    },
+    options: { ...chartDefaults }
+  });
+}
+
+const chartTemp = criarChart('chartTemp', '#e53e3e', 'Temperatura');
+const chartUmid = criarChart('chartUmid', '#3182ce', 'Umidade');
+const chartPres = criarChart('chartPres', '#38a169', 'Pressão');
+
+// ── Estado ────────────────────────────────────────────
+let periodoHoras = 1;
+
+// ── Formatação de hora ───────────────────────────────
+function formatarHora(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Atualizar leitura atual ──────────────────────────
+async function atualizarAtual() {
+  try {
+    const resp = await fetch('/api/atual');
+    if (!resp.ok) throw new Error('Sem dados');
+    const d = await resp.json();
+
+    document.getElementById('tempAtual').textContent = d.temperatura.toFixed(1);
+    document.getElementById('umidAtual').textContent = d.umidade.toFixed(1);
+    document.getElementById('presAtual').textContent = d.pressao.toFixed(1);
+
+    document.getElementById('statusDot').classList.add('online');
+    document.getElementById('statusText').textContent =
+      'Última leitura: ' + formatarHora(d.timestamp);
+  } catch {
+    document.getElementById('statusDot').classList.remove('online');
+    document.getElementById('statusText').textContent = 'Aguardando dados...';
+  }
+}
+
+// ── Atualizar estatísticas ───────────────────────────
+async function atualizarEstatisticas() {
+  try {
+    const resp = await fetch('/api/estatisticas?horas=24');
+    if (!resp.ok) return;
+    const d = await resp.json();
+
+    document.getElementById('tempMin').textContent = d.temperatura.min + '°';
+    document.getElementById('tempMax').textContent = d.temperatura.max + '°';
+    document.getElementById('umidMin').textContent = d.umidade.min + '%';
+    document.getElementById('umidMax').textContent = d.umidade.max + '%';
+    document.getElementById('presMin').textContent = d.pressao.min;
+    document.getElementById('presMax').textContent = d.pressao.max;
+  } catch {}
+}
+
+// ── Atualizar gráficos ──────────────────────────────
+async function atualizarGraficos() {
+  try {
+    const resp = await fetch(`/api/dados?horas=${periodoHoras}`);
+    if (!resp.ok) return;
+    const dados = await resp.json();
+
+    const labels = dados.map(d => formatarHora(d.timestamp));
+    const temps = dados.map(d => d.temperatura);
+    const umids = dados.map(d => d.umidade);
+    const press = dados.map(d => d.pressao);
+
+    chartTemp.data.labels = labels;
+    chartTemp.data.datasets[0].data = temps;
+    chartTemp.update('none');
+
+    chartUmid.data.labels = labels;
+    chartUmid.data.datasets[0].data = umids;
+    chartUmid.update('none');
+
+    chartPres.data.labels = labels;
+    chartPres.data.datasets[0].data = press;
+    chartPres.update('none');
+
+    // Tendência de pressão (últimas 3h vs última leitura)
+    calcularTendencia(press);
+  } catch {}
+}
+
+// ── Tendência barométrica ────────────────────────────
+function calcularTendencia(pressoes) {
+  const el = document.getElementById('tendenciaTexto');
+  const icon = document.getElementById('tendenciaIcone');
+
+  if (pressoes.length < 10) {
+    el.textContent = 'Dados insuficientes para tendência';
+    icon.textContent = '⏳';
+    return;
+  }
+
+  // Compara a média dos primeiros 20% com os últimos 20%
+  const n = Math.max(3, Math.floor(pressoes.length * 0.2));
+  const inicio = pressoes.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  const fim = pressoes.slice(-n).reduce((a, b) => a + b, 0) / n;
+  const diff = fim - inicio;
+
+  if (diff > 2) {
+    icon.textContent = '☀️';
+    el.textContent = `Pressão subindo (+${diff.toFixed(1)} hPa) — tendência de tempo bom`;
+  } else if (diff < -2) {
+    icon.textContent = '🌧️';
+    el.textContent = `Pressão caindo (${diff.toFixed(1)} hPa) — possível mudança de tempo`;
+  } else {
+    icon.textContent = '⛅';
+    el.textContent = `Pressão estável (${diff > 0 ? '+' : ''}${diff.toFixed(1)} hPa) — tempo sem grandes mudanças`;
+  }
+}
+
+// ── Controles de período ─────────────────────────────
+document.querySelectorAll('.btn[data-horas]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    periodoHoras = parseFloat(btn.dataset.horas);
+    atualizarGraficos();
+  });
+});
+
+// ── Loop de atualização ──────────────────────────────
+async function atualizar() {
+  await Promise.all([
+    atualizarAtual(),
+    atualizarEstatisticas(),
+    atualizarGraficos()
+  ]);
+}
+
+// Primeira carga imediata, depois a cada 10 segundos
+atualizar();
+setInterval(atualizar, 10000);
+</script>
+
+</body>
+</html>
