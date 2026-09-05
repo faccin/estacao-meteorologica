@@ -5,7 +5,7 @@
 
 Estação meteorológica off-grid para uso em sala de aula. Os alunos acessam dados de temperatura, umidade e pressão em tempo real pelo celular, conectando no WiFi da estação — sem precisar de internet.
 
-**[Guia completo de montagem (GitHub Pages)](https://josefaccin.github.io/estacao-meteorologica/)**
+**[Guia completo de montagem (GitHub Pages)](https://faccin.github.io/estacao-meteorologica/)**
 
 ## Arquitetura
 
