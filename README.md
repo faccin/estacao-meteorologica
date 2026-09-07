@@ -1,124 +1,103 @@
-# Estação Meteorológica Educacional
+# 🌦️ Estação Meteorológica Educacional
 
 **Colégio Franciscano Cristo Rei · Marau, RS**
-**Professor Regente:** Dr. José Ricardo Faccin · Turma 9º Ano — 2026
+Professor Regente: Dr. José Ricardo Faccin · Turma 9º Ano — 2026
 
-Estação meteorológica off-grid para uso em sala de aula. Os alunos acessam dados de temperatura, umidade e pressão em tempo real pelo celular, conectando no WiFi da estação — sem precisar de internet.
+Estação meteorológica off-grid para uso em sala de aula. Os alunos acompanham temperatura, umidade e pressão em tempo real pelo celular, conectando no WiFi da estação — sem depender de internet.
 
-**[Guia completo de montagem (GitHub Pages)](https://faccin.github.io/estacao-meteorologica/)**
+📖 **[Guia completo de montagem](https://faccin.github.io/estacao-meteorologica/)**
+
+---
 
 ## Arquitetura
 
+Dois módulos Heltec se comunicam por rádio **LoRa** (915 MHz), não por WiFi. Isso dá alcance de centenas de metros entre o ponto de coleta e a Orange Pi — o WiFi da Orange Pi fica livre só para os celulares dos alunos acessarem o painel.
+
 ```
-┌──────────┐              ┌─────────────┐              ┌─────────────┐           ┌──────────┐
-│  BMP280  │───I2C───────▶│             │  WiFi POST   │             │  WiFi     │ Celular  │
-│ (pressão)│              │  Heltec V4  │─────────────▶│  Orange Pi  │◀─────────▶│ do aluno │
-│  DHT22   │───GPIO 7───▶│  ESP32-S3   │              │  Flask +    │           │ navegador│
-│(umidade) │              │  + OLED     │              │  SQLite     │           └──────────┘
-└──────────┘              └─────────────┘              └─────────────┘
-   sensores               lê → exibe → envia         recebe → armazena → serve
+┌──────────┐         ┌─────────────────┐    LoRa 915MHz    ┌─────────────────┐   USB    ┌─────────────┐   WiFi    ┌──────────┐
+│  BMP280  │──I2C───▶│                 │───────────────────▶│                 │─────────▶│             │◀─────────▶│ Celular  │
+│ (pressão)│         │  Heltec #1      │      rádio         │  Heltec #2      │  serial   │  Orange Pi  │           │ do aluno │
+│  DHT22   │──GPIO──▶│  "nó remoto"    │                     │  "base"         │           │  Flask +    │           │ navegador│
+│(umidade) │         │  + OLED         │                     │  + OLED         │           │  SQLite     │           └──────────┘
+└──────────┘         └─────────────────┘                     └─────────────────┘           └─────────────┘
+   sensores          lê → exibe → transmite            recebe → repassa por USB       recebe → armazena → serve
 ```
+
+- **Heltec #1 (nó remoto):** fica junto aos sensores, onde quer que a coleta precise acontecer. Não precisa de WiFi nem de estar perto da Orange Pi.
+- **Heltec #2 (base):** conectada por cabo USB na Orange Pi. Só recebe o rádio e repassa pela serial — não tem sensor nenhum ligado nela.
+- **Orange Pi:** roda o hotspot (`EstacaoMeteo`), o servidor Flask e o script que lê a serial da base.
 
 ## Componentes
 
-| Componente | Função |
+| Item | Função |
 |---|---|
-| **Heltec WiFi LoRa 32 V3** | Microcontrolador ESP32-S3 — lê os sensores e envia via WiFi |
-| **Orange Pi Zero 2W** | Servidor web — recebe dados, armazena em SQLite, serve a interface |
-| **BMP280** | Sensor I2C — pressão atmosférica (300–1100 hPa) e temperatura |
-| **DHT22** | Sensor digital — umidade relativa (0–100%) e temperatura |
+| 2× Heltec WiFi LoRa 32 V3/V4 (ESP32-S3 + SX1262 + OLED) | Nó remoto (sensores + transmissão) e base (recepção) |
+| BMP280 | Sensor I2C — pressão (300–1100 hPa) e temperatura |
+| DHT22 | Sensor digital — umidade (0–100%) e temperatura |
+| Orange Pi Zero 2W | Hotspot WiFi + servidor Flask + SQLite |
+| Cabo USB-C | Liga a Heltec base na Orange Pi |
 
-## Início rápido (simulador no PC)
-
-Não precisa do hardware para testar:
-
-```bash
-# Instalar dependência
-pip install flask
-
-# Iniciar o servidor
-python app.py &
-
-# Preencher 24h de dados simulados (instantâneo)
-python preencher_db.py
-
-# Abrir no navegador: http://localhost:5000
-```
-
-O simulador contínuo também está disponível:
+## Início rápido
 
 ```bash
-python simular.py                 # 1 leitura por segundo
-python simular.py --intervalo 60  # 1 por minuto (ritmo real)
+# Na Orange Pi
+git clone https://github.com/faccin/estacao-meteorologica.git
+cd estacao-meteorologica
+pip3 install flask pyserial requests --break-system-packages
+
+# Testar sem hardware (dados simulados)
+python3 preencher_db.py
+python3 app.py
+# Acesse http://192.168.4.1:5000 conectado no WiFi EstacaoMeteo
 ```
 
-## Interface web
+Para o fluxo completo com hardware real, siga o **[guia de montagem](https://faccin.github.io/estacao-meteorologica/)**.
 
-A interface mostra:
+## Rede WiFi (para os alunos acessarem o painel)
 
-- **Leituras em tempo real** — temperatura, umidade e pressão com atualização a cada 10s
-- **Gráficos interativos** — períodos de 1h, 3h, 6h, 12h e 24h
-- **Tendência barométrica** — indica se o tempo vai mudar
-- **Estatísticas** — mínima, máxima e média de 24h
-- **Exportação CSV** — os alunos baixam os dados para analisar no Excel
-
-## Ligações elétricas
-
-| Sensor | Pino | Heltec V4 |
-|---|---|---|
-| BMP280 SDA | → | GPIO 41 |
-| BMP280 SCL | → | GPIO 42 |
-| DHT22 DATA | → | GPIO 7 |
-| Ambos VCC | → | 3.3V |
-| Ambos GND | → | GND |
+- SSID: `EstacaoMeteo`
+- Senha: `12345678`
+- Painel: `http://192.168.4.1:5000`
 
 ## API REST
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `POST` | `/api/dados` | Recebe leitura dos sensores (JSON) |
+| `POST` | `/api/dados` | Recebe uma leitura (JSON: `temperatura`, `umidade`, `pressao`, `timestamp` opcional) |
 | `GET` | `/api/atual` | Última leitura |
 | `GET` | `/api/dados?horas=6` | Histórico das últimas N horas |
-| `GET` | `/api/estatisticas?horas=24` | Min, max e média do período |
+| `GET` | `/api/estatisticas?horas=24` | Mínimo, máximo e média do período |
 | `GET` | `/api/exportar?horas=24` | Download CSV |
 
 ## Estrutura do projeto
 
 ```
 estacao-meteorologica/
-├── app.py                  # Servidor Flask (backend)
-├── simular.py              # Simulador de sensores (HTTP POST)
-├── preencher_db.py         # Preenchimento rápido do banco (SQLite direto)
+├── app.py                          # Servidor Flask (backend) — roda na Orange Pi
+├── simular.py                      # Simulador de sensores via HTTP POST
+├── preencher_db.py                 # Preenche o banco direto (teste rápido)
+├── leitor_serial_orangepi.py       # Lê a serial da base LoRa e envia pro Flask
+├── estacao.service                 # Serviço systemd do Flask
+├── estacao-lora.service            # Serviço systemd do leitor serial
+├── SETUP_ORANGE_PI.md              # Guia de configuração da Orange Pi
 ├── static/
-│   └── index.html          # Interface web (frontend)
+│   └── index.html                  # Interface web (frontend)
 ├── docs/
-│   └── index.html          # Guia completo (GitHub Pages)
+│   └── index.html                  # Guia completo (GitHub Pages)
 └── firmware/
-    └── estacao_heltec/
-        └── estacao_heltec.ino  # Firmware do Heltec V4
+    ├── no_remoto_sensores/
+    │   └── no_remoto_sensores.ino  # Firmware do Heltec #1 (sensores + LoRa TX)
+    └── base_receptora/
+        └── base_receptora.ino      # Firmware do Heltec #2 (LoRa RX + USB)
 ```
 
-## Em sala de aula
+## Uso em sala de aula
 
-1. Ligar a Orange Pi (USB-C 5V/2A) — aguardar ~30s
-2. Ligar o Heltec V4 (USB ou bateria LiPo)
-3. Alunos conectam no WiFi **EstacaoMeteo** (senha: `meteorologia`)
-4. Abrem o navegador → interface abre automaticamente
-5. Dados em tempo real + gráficos + exportação CSV
-
-## Rede WiFi (em campo)
-
-| | |
-|---|---|
-| **SSID** | `EstacaoMeteo` |
-| **Senha** | `meteorologia` |
-| **Interface** | `http://192.168.4.1:5000` |
+1. Ligue a Orange Pi (o hotspot e o painel sobem sozinhos, sem precisar de tela ou teclado).
+2. Ligue as duas Heltecs — o nó remoto começa a transmitir, a base recebe e repassa.
+3. Os alunos conectam o celular no WiFi `EstacaoMeteo` e abrem `192.168.4.1:5000`.
+4. O painel mostra os dados em tempo real, com histórico e exportação em CSV para os alunos analisarem em planilha.
 
 ## Licença
 
-MIT
-
----
-
-*Heltec V4 + Orange Pi Zero 2W + BMP280 + DHT22*
-*Colégio Franciscano Cristo Rei · Marau, RS*
+Projeto educacional — Colégio Franciscano Cristo Rei.

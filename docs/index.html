@@ -4,978 +4,357 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Estação Meteorológica Educacional — Guia Completo</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Bitter:wght@500;700&display=swap">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ── Tokens ─────────────────────────────────────────── */
-:root {
-  --bg: #f4f6fa;
-  --bg-surface: #ffffff;
-  --bg-code: #eef1f6;
-  --text: #1e2a3a;
-  --text-muted: #5a6a7e;
-  --text-faint: #8694a6;
-  --border: #d4dbe6;
-  --accent: #1b3a6b;
-  --accent-light: #e8eef6;
-  --accent-dark: #0f2548;
-  --teal: #0a7e72;
-  --teal-light: #e4f4f2;
-  --orange: #e86820;
-  --green: #2e8c3a;
-  --gold: #c89a15;
-  --sensor-temp: #c4503a;
-  --sensor-umid: #2874a6;
-  --sensor-pres: #0a7e72;
-  --alert-bg: #fef7e5;
-  --alert-border: #d4a017;
-  --alert-text: #6b5a10;
-  --shadow: 0 1px 4px rgba(27,58,107,0.07);
-  --shadow-lg: 0 4px 14px rgba(27,58,107,0.1);
-  --radius: 6px;
-}
+  :root {
+    --navy: #1b3a6b;
+    --teal: #0a7e72;
+    --orange: #f07020;
+    --green: #3a9e3f;
+    --gold: #d4a017;
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111720;
-    --bg-surface: #1a2232;
-    --bg-code: #1e2838;
-    --text: #dce2ec;
-    --text-muted: #8a96a8;
-    --text-faint: #5a6678;
-    --border: #2a3648;
-    --accent: #6aa0e0;
-    --accent-light: #1a2a40;
-    --accent-dark: #9ec4f0;
-    --teal: #4ec0b0;
-    --teal-light: #142e2c;
-    --orange: #f0884a;
-    --green: #5ab868;
-    --gold: #e0b840;
-    --sensor-temp: #e27260;
-    --sensor-umid: #6a9fd4;
-    --sensor-pres: #4ec0b0;
-    --alert-bg: #2a2515;
-    --alert-border: #8a7520;
-    --alert-text: #e5d27a;
-    --shadow: 0 1px 4px rgba(0,0,0,0.25);
-    --shadow-lg: 0 4px 14px rgba(0,0,0,0.3);
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --ink: #1c2430;
+    --ink-soft: #4a5568;
+    --border: #e2e0d8;
+    --code-bg: #101a2c;
   }
-}
-:root[data-theme="dark"] {
-  --bg: #111720;
-  --bg-surface: #1a2232;
-  --bg-code: #1e2838;
-  --text: #dce2ec;
-  --text-muted: #8a96a8;
-  --text-faint: #5a6678;
-  --border: #2a3648;
-  --accent: #6aa0e0;
-  --accent-light: #1a2a40;
-  --accent-dark: #9ec4f0;
-  --teal: #4ec0b0;
-  --teal-light: #142e2c;
-  --orange: #f0884a;
-  --green: #5ab868;
-  --gold: #e0b840;
-  --sensor-temp: #e27260;
-  --sensor-umid: #6a9fd4;
-  --sensor-pres: #4ec0b0;
-  --alert-bg: #2a2515;
-  --alert-border: #8a7520;
-  --alert-text: #e5d27a;
-  --shadow: 0 1px 4px rgba(0,0,0,0.25);
-  --shadow-lg: 0 4px 14px rgba(0,0,0,0.3);
-}
 
-/* ── Base ───────────────────────────────────────────── */
-body {
-  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.65;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-}
+  [data-theme="dark"] {
+    --bg: #0d1420;
+    --surface: #151f30;
+    --ink: #e7ecf3;
+    --ink-soft: #a4b0c2;
+    --border: #263349;
+    --code-bg: #0a1220;
+  }
 
-* { box-sizing: border-box; }
+  * { box-sizing: border-box; }
 
-.page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 1.25rem 3rem;
-}
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.6;
+    transition: background .2s, color .2s;
+  }
 
-/* ── Hero institucional ─────────────────────────────── */
-.hero {
-  padding: 2rem 0 1.5rem;
-  border-bottom: none;
-  position: relative;
-}
-.hero::after {
-  content: '';
-  display: block;
-  height: 3px;
-  margin-top: 1.5rem;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--orange), var(--gold), var(--green), var(--teal));
-}
-.hero-school {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--accent);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 0.6rem;
-}
-.hero h1 {
-  font-family: 'Bitter', Georgia, serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.25;
-  text-wrap: balance;
-  margin: 0 0 0.5rem;
-  color: var(--accent);
-}
-.hero-sub {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  max-width: 560px;
-}
-.hero-credit {
-  margin-top: 0.8rem;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-.hero-credit strong {
-  color: var(--text);
-  font-weight: 600;
-}
+  h1, h2, h3 { font-family: 'Bitter', serif; line-height: 1.25; }
 
-/* ── Nav / TOC ──────────────────────────────────────── */
-.toc {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
-  margin: 1.5rem 0;
-  box-shadow: var(--shadow);
-}
-.toc-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-faint);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 0.6rem;
-}
-.toc-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.toc-list a {
-  color: var(--teal);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-.toc-list a:hover { text-decoration: underline; }
-.toc-step {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--text-faint);
-  min-width: 1.5rem;
-}
+  code, pre, .mono { font-family: 'IBM Plex Mono', monospace; }
 
-/* ── Sections ───────────────────────────────────────── */
-.section {
-  margin-top: 2.5rem;
-}
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.section-number {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #fff;
-  background: var(--accent);
-  width: 1.75rem;
-  height: 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.section h2 {
-  font-family: 'Bitter', Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--accent);
-}
-.section h3 {
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 1.5rem 0 0.5rem;
-  color: var(--text);
-}
+  a { color: var(--teal); }
 
-/* ── Subsections ────────────────────────────────────── */
-.subsection {
-  margin-top: 1.25rem;
-}
-.sub-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--teal);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 0.35rem;
-}
+  .colorbar {
+    height: 6px;
+    background: linear-gradient(90deg, var(--navy) 0 20%, var(--teal) 20% 40%, var(--orange) 40% 60%, var(--green) 60% 80%, var(--gold) 80% 100%);
+  }
 
-/* ── Parts list / materials ─────────────────────────── */
-.parts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin: 0.75rem 0;
-}
-.part-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  box-shadow: var(--shadow);
-}
-.part-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.15rem;
-}
-.part-detail {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
+  header.hero {
+    background: linear-gradient(135deg, var(--navy), var(--teal));
+    color: #fff;
+    padding: 3.5rem 1.5rem 3rem;
+  }
+  header.hero .inner { max-width: 780px; margin: 0 auto; }
+  header.hero .eyebrow { color: #cfe3ea; font-size: .95rem; margin-bottom: .5rem; }
+  header.hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 .75rem; }
+  header.hero p.lede { font-size: 1.1rem; color: #e3edf0; max-width: 60ch; }
 
-/* ── Pin table ──────────────────────────────────────── */
-.pin-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.75rem 0;
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-}
-.pin-table th {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-align: left;
-  padding: 0.4rem 0.6rem;
-  border-bottom: 2px solid var(--border);
-}
-.pin-table td {
-  padding: 0.4rem 0.6rem;
-  border-bottom: 1px solid var(--border);
-}
-.pin-table tr:last-child td { border-bottom: none; }
-.pin-table code {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.8rem;
-  background: var(--bg-code);
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
-}
-.pin-sensor-temp { border-left: 3px solid var(--sensor-temp); }
-.pin-sensor-umid { border-left: 3px solid var(--sensor-umid); }
-.pin-sensor-pres { border-left: 3px solid var(--sensor-pres); }
+  nav.toc {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  nav.toc .inner { max-width: 900px; margin: 0 auto; padding: .6rem 1rem; display: flex; gap: 1.25rem; align-items: center; }
+  nav.toc a { color: var(--ink-soft); text-decoration: none; font-size: .92rem; font-weight: 500; }
+  nav.toc a:hover { color: var(--teal); }
+  #theme-toggle {
+    margin-left: auto; background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: .3rem .6rem; cursor: pointer; color: var(--ink);
+    font-family: inherit; font-size: .85rem; flex-shrink: 0;
+  }
 
-/* ── Code blocks ────────────────────────────────────── */
-pre {
-  background: var(--bg-code);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  overflow-x: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.8rem;
-  line-height: 1.55;
-  margin: 0.75rem 0;
-}
-code {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.82rem;
-}
-p code, li code {
-  background: var(--bg-code);
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-}
+  main { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
 
-/* ── Alert / tip boxes ──────────────────────────────── */
-.alert {
-  background: var(--alert-bg);
-  border-left: 3px solid var(--alert-border);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  padding: 0.65rem 0.85rem;
-  margin: 0.75rem 0;
-  font-size: 0.85rem;
-  color: var(--alert-text);
-}
-.alert strong { font-weight: 600; }
+  section { padding: 3rem 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  section h2 { font-size: 1.6rem; color: var(--navy); }
+  [data-theme="dark"] section h2 { color: #8fb4e8; }
+  section h3 { font-size: 1.15rem; margin-top: 2rem; }
 
-.tip {
-  background: var(--teal-light);
-  border-left: 3px solid var(--teal);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  padding: 0.65rem 0.85rem;
-  margin: 0.75rem 0;
-  font-size: 0.85rem;
-  color: var(--text);
-}
+  p { max-width: 68ch; }
 
-/* ── Steps (ordered) ────────────────────────────────── */
-.steps {
-  list-style: none;
-  padding: 0;
-  margin: 0.75rem 0;
-  counter-reset: step;
-}
-.steps > li {
-  counter-increment: step;
-  position: relative;
-  padding-left: 2rem;
-  margin-bottom: 0.85rem;
-  min-height: 1.5rem;
-}
-.steps > li::before {
-  content: counter(step);
-  position: absolute;
-  left: 0;
-  top: 0.1rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--teal);
-  background: var(--teal-light);
-  width: 1.4rem;
-  height: 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
+  table { border-collapse: collapse; width: 100%; margin: 1.25rem 0; font-size: .95rem; }
+  th, td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--ink-soft); font-weight: 500; font-size: .85rem; }
+  td.mono, th.mono { font-size: .88rem; }
 
-/* ── Quick-ref table (bottom) ───────────────────────── */
-.ref-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.75rem 0;
-  font-size: 0.85rem;
-}
-.ref-table th {
-  text-align: left;
-  font-weight: 600;
-  padding: 0.5rem 0.6rem;
-  background: var(--accent-light);
-  border-bottom: 1px solid var(--border);
-  color: var(--accent);
-}
-.ref-table td {
-  padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--border);
-}
-.ref-table code {
-  font-size: 0.78rem;
-}
+  pre {
+    background: var(--code-bg);
+    color: #d6e3f5;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: .85rem;
+    line-height: 1.55;
+  }
+  code.inline {
+    background: rgba(10, 126, 114, .1);
+    color: var(--teal);
+    padding: .1rem .4rem;
+    border-radius: 4px;
+    font-size: .88em;
+  }
 
-/* ── SVG diagrams ───────────────────────────────────── */
-figure {
-  margin: 1.25rem 0;
-}
-figure svg {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
-figcaption {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 0.4rem;
-  font-style: italic;
-}
+  .callout {
+    border-left: 3px solid var(--orange);
+    background: rgba(240, 112, 32, .07);
+    padding: .9rem 1.1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1.25rem 0;
+    font-size: .95rem;
+  }
+  .callout.info { border-color: var(--teal); background: rgba(10, 126, 114, .07); }
 
-/* ── API endpoint list ──────────────────────────────── */
-.endpoint {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.65rem 0.85rem;
-  margin: 0.5rem 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  box-shadow: var(--shadow);
-}
-.method {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-.method-get { background: var(--teal-light); color: var(--teal); }
-.method-post { background: #fce8e5; color: var(--sensor-temp); }
-.endpoint-path {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.82rem;
-}
-.endpoint-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-left: auto;
-}
+  .diagram { margin: 1.75rem 0; }
+  .diagram svg { width: 100%; height: auto; }
 
-/* ── Footer ─────────────────────────────────────────── */
-.guide-footer {
-  margin-top: 3rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  text-align: center;
-}
-.guide-footer-credit {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 0.6rem;
-}
-.guide-footer-credit strong {
-  color: var(--accent);
-  font-weight: 600;
-}
-.guide-footer-tech {
-  font-size: 0.72rem;
-  color: var(--text-faint);
-}
-.guide-footer-bar {
-  height: 3px;
-  margin-top: 1rem;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--orange), var(--gold), var(--green), var(--teal));
-}
-.back-link {
-  display: inline-block;
-  margin-top: 0.8rem;
-  font-size: 0.82rem;
-  color: var(--teal);
-  text-decoration: none;
-}
-.back-link:hover { text-decoration: underline; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+  @media (max-width: 620px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .card h4 { margin: 0 0 .5rem; color: var(--teal); font-family: 'IBM Plex Sans'; font-size: 1rem; font-weight: 600; }
 
-/* ── Responsive ─────────────────────────────────────── */
-@media (max-width: 500px) {
-  .hero h1 { font-size: 1.4rem; }
-  .parts-grid { grid-template-columns: 1fr; }
-  .endpoint { flex-direction: column; gap: 0.25rem; }
-  .endpoint-desc { margin-left: 0; }
-}
+  footer { text-align: center; padding: 2.5rem 1.5rem 3.5rem; color: var(--ink-soft); font-size: .9rem; }
+  footer a { color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
-<div class="page">
+<div class="colorbar"></div>
 
-<!-- ═══ HERO ═══ -->
-<div class="hero">
-  <div class="hero-school">Colégio Franciscano Cristo Rei · Marau, RS</div>
-  <h1>Estação Meteorológica Educacional</h1>
-  <div class="hero-sub">
-    Do zero à sala de aula: montagem, firmware, servidor e interface web.
-    BMP280 + DHT22, comunicação WiFi, dados em tempo real para os alunos.
+<header class="hero">
+  <div class="inner">
+    <div class="eyebrow">Colégio Franciscano Cristo Rei · Marau, RS · Turma 9º Ano — 2026</div>
+    <h1>Estação Meteorológica Educacional</h1>
+    <p class="lede">Sensores lendo temperatura, umidade e pressão, transmitindo por rádio até uma Orange Pi que serve os dados para o celular dos alunos — tudo funcionando sem internet.</p>
   </div>
-  <div class="hero-credit">
-    <strong>Professor Regente:</strong> Dr. José Ricardo Faccin<br>
-    <strong>Turma:</strong> 9º Ano — 2026
-  </div>
-</div>
+</header>
 
-<!-- ═══ TOC ═══ -->
 <nav class="toc">
-  <div class="toc-title">Etapas</div>
-  <ul class="toc-list">
-    <li><a href="#materiais"><span class="toc-step">1</span> Lista de materiais</a></li>
-    <li><a href="#ligacoes"><span class="toc-step">2</span> Ligações elétricas</a></li>
-    <li><a href="#firmware"><span class="toc-step">3</span> Firmware do Heltec V4</a></li>
-    <li><a href="#orangepi"><span class="toc-step">4</span> Preparar a Orange Pi</a></li>
-    <li><a href="#hotspot"><span class="toc-step">5</span> Configurar o hotspot WiFi</a></li>
-    <li><a href="#servidor"><span class="toc-step">6</span> Instalar o servidor web</a></li>
-    <li><a href="#testar"><span class="toc-step">7</span> Testar tudo junto</a></li>
-    <li><a href="#aula"><span class="toc-step">8</span> Uso em sala de aula</a></li>
-    <li><a href="#referencia"><span class="toc-step">→</span> Referência rápida</a></li>
-  </ul>
+  <div class="inner">
+    <a href="#arquitetura">Arquitetura</a>
+    <a href="#materiais">Materiais</a>
+    <a href="#ligacoes">Ligações</a>
+    <a href="#firmware">Firmware</a>
+    <a href="#orangepi">Orange Pi</a>
+    <a href="#testar">Testar</a>
+    <a href="#aula">Em sala</a>
+    <button id="theme-toggle">🌙 Escuro</button>
+  </div>
 </nav>
 
-<!-- ═══ ARQUITETURA ═══ -->
-<figure>
-  <svg viewBox="0 0 680 200" role="img" aria-label="Diagrama de arquitetura: o Heltec V4 lê os sensores BMP280 e DHT22, envia dados via WiFi HTTP POST para a Orange Pi, que armazena em SQLite e serve a interface web para os celulares dos alunos.">
-    <rect x="10" y="55" width="100" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
-    <text x="60" y="74" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="currentColor">BMP280</text>
-    <rect x="10" y="100" width="100" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
-    <text x="60" y="119" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="currentColor">DHT22</text>
-    <text x="60" y="150" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor" opacity="0.5">sensores</text>
-    <line x1="110" y1="70" x2="170" y2="85" stroke="currentColor" stroke-width="1.2"/>
-    <polygon points="168,81 175,86 168,89" fill="currentColor"/>
-    <line x1="110" y1="115" x2="170" y2="100" stroke="currentColor" stroke-width="1.2"/>
-    <polygon points="168,96 175,100 168,104" fill="currentColor"/>
-    <text x="140" y="78" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="currentColor" opacity="0.6">I2C</text>
-    <text x="140" y="120" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="currentColor" opacity="0.6">GPIO 7</text>
-    <rect x="175" y="50" width="140" height="85" rx="6" fill="var(--accent-light)" stroke="var(--accent)" stroke-width="1.8"/>
-    <text x="245" y="78" text-anchor="middle" font-family="'Bitter',serif" font-size="13" font-weight="700" fill="var(--accent)">Heltec V4</text>
-    <text x="245" y="95" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9.5" fill="currentColor">ESP32-S3 + OLED</text>
-    <text x="245" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="currentColor" opacity="0.6">lê → exibe → envia</text>
-    <text x="245" y="150" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor" opacity="0.5">bateria LiPo / USB</text>
-    <line x1="315" y1="92" x2="385" y2="92" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="6,3"/>
-    <polygon points="383,88 390,92 383,96" fill="var(--teal)"/>
-    <text x="352" y="84" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" font-weight="500" fill="var(--teal)">WiFi</text>
-    <text x="352" y="108" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="currentColor" opacity="0.5">HTTP POST</text>
-    <text x="352" y="118" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="currentColor" opacity="0.5">/api/dados</text>
-    <rect x="390" y="50" width="140" height="85" rx="6" fill="var(--teal-light)" stroke="var(--teal)" stroke-width="1.8"/>
-    <text x="460" y="78" text-anchor="middle" font-family="'Bitter',serif" font-size="13" font-weight="700" fill="var(--teal)">Orange Pi</text>
-    <text x="460" y="95" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9.5" fill="currentColor">Flask + SQLite</text>
-    <text x="460" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="currentColor" opacity="0.6">recebe → armazena → serve</text>
-    <text x="460" y="150" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor" opacity="0.5">hotspot "EstacaoMeteo"</text>
-    <line x1="530" y1="92" x2="580" y2="72" stroke="currentColor" stroke-width="1.2"/>
-    <polygon points="578,68 585,72 578,76" fill="currentColor"/>
-    <line x1="530" y1="92" x2="580" y2="92" stroke="currentColor" stroke-width="1.2"/>
-    <polygon points="578,88 585,92 578,96" fill="currentColor"/>
-    <line x1="530" y1="92" x2="580" y2="112" stroke="currentColor" stroke-width="1.2"/>
-    <polygon points="578,108 585,112 578,116" fill="currentColor"/>
-    <text x="555" y="60" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="7.5" fill="currentColor" opacity="0.5">WiFi</text>
-    <rect x="588" y="57" width="82" height="25" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-    <text x="629" y="74" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="10" fill="currentColor">Aluno 1</text>
-    <rect x="588" y="87" width="82" height="25" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-    <text x="629" y="104" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="10" fill="currentColor">Aluno 2</text>
-    <rect x="588" y="117" width="82" height="25" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-    <text x="629" y="134" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="10" fill="currentColor">Aluno N</text>
-    <text x="629" y="160" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor" opacity="0.5">celulares / navegador</text>
-  </svg>
-  <figcaption>Fluxo de dados: sensores → Heltec (lê e exibe) → Orange Pi (armazena e serve) → celulares dos alunos via hotspot WiFi</figcaption>
-</figure>
+<main>
 
-<!-- ═══ 1. MATERIAIS ═══ -->
-<section class="section" id="materiais">
-  <div class="section-header">
-    <span class="section-number">1</span>
-    <h2>Lista de materiais</h2>
-  </div>
-  <div class="parts-grid">
-    <div class="part-card">
-      <div class="part-name">Heltec WiFi LoRa 32 V3</div>
-      <div class="part-detail">ESP32-S3 com LoRa, OLED 0.96", gerenciamento de bateria</div>
-    </div>
-    <div class="part-card">
-      <div class="part-name">Orange Pi Zero 2W</div>
-      <div class="part-detail">2GB RAM, slot microSD, WiFi onboard. Fonte USB-C 5V/2A</div>
-    </div>
-    <div class="part-card">
-      <div class="part-name">BMP280</div>
-      <div class="part-detail">Módulo I2C — pressão (300–1100 hPa) e temperatura. ~R$ 12</div>
-    </div>
-    <div class="part-card">
-      <div class="part-name">DHT22</div>
-      <div class="part-detail">Umidade (0–100%) e temperatura. Resistor pull-up de 10 kΩ incluído na maioria dos módulos</div>
-    </div>
-    <div class="part-card">
-      <div class="part-name">Protoboard + jumpers</div>
-      <div class="part-detail">Para a montagem sem solda. Jumpers macho-fêmea para os módulos</div>
-    </div>
-    <div class="part-card">
-      <div class="part-name">Cartão microSD</div>
-      <div class="part-detail">16 GB classe 10 para o Armbian na Orange Pi</div>
-    </div>
-  </div>
-  <div class="tip">
-    <strong>Opcional para off-grid:</strong> painel solar 5W + controlador de carga + bateria 18650 para o Heltec, e painel 10W + powerbank para a Orange Pi.
-  </div>
-</section>
+<section id="arquitetura">
+  <h2>Arquitetura</h2>
+  <p>A estação usa <strong>dois módulos Heltec</strong> conversando por rádio <strong>LoRa</strong> (915&nbsp;MHz — faixa liberada no Brasil), não por WiFi. Isso permite colocar os sensores a centenas de metros da Orange Pi, mesmo sem sinal de wifi ali. O WiFi da Orange Pi fica reservado só para os celulares dos alunos acessarem o painel.</p>
 
-<!-- ═══ 2. LIGAÇÕES ═══ -->
-<section class="section" id="ligacoes">
-  <div class="section-header">
-    <span class="section-number">2</span>
-    <h2>Ligações elétricas</h2>
-  </div>
-  <p>Os dois sensores conectam diretamente no Heltec V4. O BMP280 usa o barramento I2C (dois fios de dados + alimentação) e o DHT22 usa um pino digital.</p>
-  <h3>Tabela de conexões</h3>
-  <div style="overflow-x: auto;">
-  <table class="pin-table">
-    <thead>
-      <tr><th>Sensor</th><th>Pino do Sensor</th><th>Pino do Heltec V4</th><th>Observação</th></tr>
-    </thead>
-    <tbody>
-      <tr class="pin-sensor-pres"><td>BMP280</td><td>VCC</td><td><code>3.3V</code></td><td>Alimentação 3.3V</td></tr>
-      <tr class="pin-sensor-pres"><td>BMP280</td><td>GND</td><td><code>GND</code></td><td></td></tr>
-      <tr class="pin-sensor-pres"><td>BMP280</td><td>SDA</td><td><code>GPIO 41</code></td><td>I2C Data</td></tr>
-      <tr class="pin-sensor-pres"><td>BMP280</td><td>SCL</td><td><code>GPIO 42</code></td><td>I2C Clock</td></tr>
-      <tr class="pin-sensor-umid"><td>DHT22</td><td>VCC (pino 1)</td><td><code>3.3V</code></td><td>Alimentação 3.3V</td></tr>
-      <tr class="pin-sensor-umid"><td>DHT22</td><td>DATA (pino 2)</td><td><code>GPIO 7</code></td><td>Pull-up 10 kΩ para 3.3V</td></tr>
-      <tr class="pin-sensor-umid"><td>DHT22</td><td>GND (pino 4)</td><td><code>GND</code></td><td>Pino 3 não conecta</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <figure>
-    <svg viewBox="0 0 600 260" role="img" aria-label="Diagrama de ligação — BMP280 (I2C, esquerda) e DHT22 (digital, direita) no Heltec V4">
-      <rect x="210" y="30" width="180" height="200" rx="8" fill="var(--accent-light)" stroke="var(--accent)" stroke-width="2"/>
-      <text x="300" y="60" text-anchor="middle" font-family="'Bitter',serif" font-size="14" font-weight="700" fill="var(--accent)">Heltec V4</text>
-      <rect x="250" y="70" width="100" height="40" rx="3" fill="var(--bg-code)" stroke="currentColor" stroke-width="1"/>
-      <text x="300" y="94" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">OLED 128×64</text>
-      <text x="225" y="140" text-anchor="start" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">3.3V</text>
-      <text x="225" y="158" text-anchor="start" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">GND</text>
-      <text x="225" y="176" text-anchor="start" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">GPIO 41 (SDA)</text>
-      <text x="225" y="194" text-anchor="start" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">GPIO 42 (SCL)</text>
-      <text x="375" y="140" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">3.3V</text>
-      <text x="375" y="158" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">GND</text>
-      <text x="375" y="176" text-anchor="end" font-family="'IBM Plex Mono',monospace" font-size="9" fill="currentColor">GPIO 7</text>
-      <circle cx="218" cy="137" r="3" fill="var(--sensor-pres)"/>
-      <circle cx="218" cy="155" r="3" fill="currentColor"/>
-      <circle cx="218" cy="173" r="3" fill="var(--sensor-pres)"/>
-      <circle cx="218" cy="191" r="3" fill="var(--sensor-pres)"/>
-      <circle cx="382" cy="137" r="3" fill="var(--sensor-umid)"/>
-      <circle cx="382" cy="155" r="3" fill="currentColor"/>
-      <circle cx="382" cy="173" r="3" fill="var(--sensor-umid)"/>
-      <rect x="20" y="115" width="120" height="100" rx="5" fill="none" stroke="var(--sensor-pres)" stroke-width="1.8"/>
-      <text x="80" y="140" text-anchor="middle" font-family="'Bitter',serif" font-size="13" font-weight="700" fill="var(--sensor-pres)">BMP280</text>
-      <text x="80" y="157" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor">pressão + temp</text>
-      <text x="80" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="currentColor" opacity="0.6">I2C addr: 0x76</text>
-      <text x="80" y="200" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--sensor-pres)">VCC SDA SCL GND</text>
-      <line x1="140" y1="137" x2="215" y2="137" stroke="var(--sensor-pres)" stroke-width="1.2"/>
-      <line x1="140" y1="155" x2="215" y2="155" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
-      <line x1="140" y1="173" x2="215" y2="173" stroke="var(--sensor-pres)" stroke-width="1.2"/>
-      <line x1="140" y1="191" x2="215" y2="191" stroke="var(--sensor-pres)" stroke-width="1.2"/>
-      <rect x="460" y="115" width="120" height="100" rx="5" fill="none" stroke="var(--sensor-umid)" stroke-width="1.8"/>
-      <text x="520" y="140" text-anchor="middle" font-family="'Bitter',serif" font-size="13" font-weight="700" fill="var(--sensor-umid)">DHT22</text>
-      <text x="520" y="157" text-anchor="middle" font-family="'IBM Plex Sans',sans-serif" font-size="9" fill="currentColor">umidade + temp</text>
-      <text x="520" y="175" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="currentColor" opacity="0.6">pull-up 10kΩ</text>
-      <text x="520" y="200" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--sensor-umid)">VCC DATA _ GND</text>
-      <line x1="460" y1="137" x2="385" y2="137" stroke="var(--sensor-umid)" stroke-width="1.2"/>
-      <line x1="460" y1="155" x2="385" y2="155" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
-      <line x1="460" y1="173" x2="385" y2="173" stroke="var(--sensor-umid)" stroke-width="1.2"/>
+  <div class="diagram">
+    <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .box { fill: var(--surface, #fff); stroke: #9aa7bd; stroke-width: 1.5; rx: 8; }
+        .lbl { font: 600 12px 'IBM Plex Sans', sans-serif; fill: #1c2430; }
+        .sub { font: 400 10.5px 'IBM Plex Sans', sans-serif; fill: #6b7688; }
+        .arrow { stroke: #6b7688; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+        .tag { font: 500 9.5px 'IBM Plex Mono', monospace; fill: #0a7e72; }
+      </style>
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#6b7688"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="10" y="70" width="110" height="70" rx="8"/>
+      <text class="lbl" x="65" y="95" text-anchor="middle">Sensores</text>
+      <text class="sub" x="65" y="112" text-anchor="middle">BMP280</text>
+      <text class="sub" x="65" y="126" text-anchor="middle">DHT22</text>
+
+      <line class="arrow" x1="120" y1="105" x2="155" y2="105"/>
+      <text class="tag" x="122" y="98">I2C/GPIO</text>
+
+      <rect class="box" x="160" y="60" width="130" height="90" rx="8"/>
+      <text class="lbl" x="225" y="85" text-anchor="middle">Heltec #1</text>
+      <text class="sub" x="225" y="100" text-anchor="middle">nó remoto</text>
+      <text class="sub" x="225" y="114" text-anchor="middle">lê + exibe</text>
+      <text class="sub" x="225" y="128" text-anchor="middle">+ transmite</text>
+
+      <line class="arrow" x1="290" y1="105" x2="345" y2="105"/>
+      <text class="tag" x="292" y="90">rádio LoRa</text>
+      <text class="tag" x="292" y="100">915 MHz</text>
+
+      <rect class="box" x="350" y="60" width="130" height="90" rx="8"/>
+      <text class="lbl" x="415" y="85" text-anchor="middle">Heltec #2</text>
+      <text class="sub" x="415" y="100" text-anchor="middle">base</text>
+      <text class="sub" x="415" y="114" text-anchor="middle">recebe +</text>
+      <text class="sub" x="415" y="128" text-anchor="middle">repassa</text>
+
+      <line class="arrow" x1="480" y1="105" x2="535" y2="105"/>
+      <text class="tag" x="490" y="98">USB serial</text>
+
+      <rect class="box" x="540" y="55" width="130" height="100" rx="8"/>
+      <text class="lbl" x="605" y="80" text-anchor="middle">Orange Pi</text>
+      <text class="sub" x="605" y="96" text-anchor="middle">Flask +</text>
+      <text class="sub" x="605" y="110" text-anchor="middle">SQLite +</text>
+      <text class="sub" x="605" y="124" text-anchor="middle">hotspot</text>
+
+      <line class="arrow" x1="670" y1="105" x2="730" y2="105"/>
+      <text class="tag" x="675" y="98">WiFi</text>
+
+      <rect class="box" x="10" y="170" width="700" height="1" opacity="0"/>
+      <text class="sub" x="605" y="180" text-anchor="middle">📱 celular do aluno</text>
     </svg>
-    <figcaption>Diagrama de ligação — BMP280 (I2C, esquerda) e DHT22 (digital, direita) no Heltec V4</figcaption>
-  </figure>
-  <div class="alert">
-    <strong>Atenção:</strong> O DHT22 em módulo (plaquinha azul) já tem o resistor pull-up embutido. Se estiver usando o componente avulso, coloque um resistor de 10 kΩ entre DATA e VCC.
+  </div>
+
+  <div class="callout info">
+    <strong>Por que dois Heltec?</strong> O nó remoto pode ficar longe da Orange Pi — no telhado, num poste, num terreno aberto — sem precisar de sinal WiFi ali. Só a base, que fica conectada por cabo USB na Orange Pi, precisa estar por perto.
   </div>
 </section>
 
-<!-- ═══ 3. FIRMWARE ═══ -->
-<section class="section" id="firmware">
-  <div class="section-header">
-    <span class="section-number">3</span>
-    <h2>Firmware do Heltec V4</h2>
-  </div>
-  <h3>3.1 — Preparar o Arduino IDE</h3>
-  <ol class="steps">
-    <li>Abrir o Arduino IDE. Em <strong>Arquivo → Preferências</strong>, adicionar esta URL no campo "URLs adicionais para Gerenciadores de Placas":
-      <pre>https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series/releases/download/0.0.9/package_heltec_esp32_index.json</pre>
-    </li>
-    <li>Em <strong>Ferramentas → Placa → Gerenciador de Placas</strong>, buscar <code>Heltec ESP32</code> e instalar o pacote <strong>Heltec ESP32 Dev-Boards</strong>.</li>
-    <li>Em <strong>Ferramentas → Placa</strong>, selecionar <strong>WiFi LoRa 32 (V3) / Wireless Shell (V3)</strong>.</li>
-    <li>Instalar as bibliotecas via <strong>Ferramentas → Gerenciar Bibliotecas</strong>:
-      <pre>Adafruit BMP280 Library
-Adafruit Unified Sensor
-DHT sensor library    (por Adafruit)
-ArduinoJson           (por Benoit Blanchon)</pre>
-    </li>
-  </ol>
-  <h3>3.2 — Carregar o firmware</h3>
-  <ol class="steps">
-    <li>Abrir o arquivo <code>firmware/estacao_heltec/estacao_heltec.ino</code></li>
-    <li>Verificar as configurações no topo do código:
-      <pre>const char* WIFI_SSID     = "EstacaoMeteo";    // nome do hotspot
-const char* WIFI_PASSWORD = "meteorologia";    // senha
-const char* SERVIDOR_URL  = "http://192.168.4.1:5000/api/dados";
-
-const unsigned long INTERVALO_LEITURA = 60000;  // 60s entre leituras
-
-#define SDA_PIN   41    // I2C Data  (BMP280)
-#define SCL_PIN   42    // I2C Clock (BMP280)
-#define DHT_PIN   7     // DHT22 data</pre>
-    </li>
-    <li>Conectar o Heltec V4 via USB-C ao computador.</li>
-    <li>Selecionar a porta serial em <strong>Ferramentas → Porta</strong>.</li>
-    <li>Clicar em <strong>Upload</strong> (seta →).</li>
-  </ol>
-  <h3>3.3 — O que o firmware faz</h3>
-  <p>Ao ligar, o Heltec tenta conectar no WiFi <code>EstacaoMeteo</code> (o hotspot da Orange Pi). A cada 60 segundos, lê temperatura e pressão do BMP280 via I2C, umidade do DHT22, mostra os valores no display OLED, e envia um JSON via HTTP POST para o servidor Flask. Se o WiFi cair, reconecta automaticamente. O display mostra também um contador de envios bem-sucedidos e falhas.</p>
-  <div class="tip">
-    <strong>Para testar sem a Orange Pi:</strong> abra o Monitor Serial (115200 baud) — o firmware imprime cada leitura como JSON, útil para verificar se os sensores estão funcionando antes de montar o sistema completo.
-  </div>
-</section>
-
-<!-- ═══ 4. ORANGE PI ═══ -->
-<section class="section" id="orangepi">
-  <div class="section-header">
-    <span class="section-number">4</span>
-    <h2>Preparar a Orange Pi</h2>
-  </div>
-  <h3>4.1 — Gravar o sistema operacional</h3>
-  <ol class="steps">
-    <li>Baixar o <strong>Armbian</strong> (Debian Bookworm, servidor) para Orange Pi Zero 2W em <code>armbian.com/orange-pi-zero-2w</code></li>
-    <li>Gravar no cartão microSD com <strong>balenaEtcher</strong> ou <code>dd</code>.</li>
-    <li>Inserir o cartão na Orange Pi e ligar com fonte USB-C 5V/2A.</li>
-    <li>No primeiro boot, conectar via cabo Ethernet (ou WiFi temporário) e SSH:
-      <pre>ssh root@&lt;IP-da-Orange-Pi&gt;
-# Senha padrão: 1234 → criar usuário e senha nova</pre>
-    </li>
-  </ol>
-  <h3>4.2 — Instalar pacotes</h3>
-  <pre>sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip hostapd dnsmasq
-pip3 install flask --break-system-packages</pre>
-</section>
-
-<!-- ═══ 5. HOTSPOT ═══ -->
-<section class="section" id="hotspot">
-  <div class="section-header">
-    <span class="section-number">5</span>
-    <h2>Configurar o hotspot WiFi</h2>
-  </div>
-  <p>A Orange Pi vai criar uma rede WiFi própria. Os alunos conectam nessa rede para acessar a interface — sem precisar de internet.</p>
-  <h3>5.1 — IP estático na interface WiFi</h3>
-  <pre>sudo nmcli con add type wifi ifname wlan0 con-name hotspot \
-  autoconnect yes ssid EstacaoMeteo
-sudo nmcli con modify hotspot \
-  802-11-wireless.mode ap \
-  802-11-wireless.band bg \
-  ipv4.method shared \
-  ipv4.addresses 192.168.4.1/24 \
-  wifi-sec.key-mgmt wpa-psk \
-  wifi-sec.psk "meteorologia"
-sudo nmcli con up hotspot</pre>
-  <div class="tip">
-    <strong>Alternativa (se o Armbian não usar NetworkManager):</strong> configurar diretamente via <code>hostapd</code> + <code>dnsmasq</code>. Veja os detalhes no arquivo <code>SETUP_ORANGE_PI.md</code> do projeto.
-  </div>
-  <h3>5.2 — Captive portal (redirecionamento automático)</h3>
-  <p>Para que os alunos não precisem digitar o IP, configurar o dnsmasq para redirecionar qualquer endereço:</p>
-  <pre>sudo bash -c 'cat > /etc/dnsmasq.d/captive.conf &lt;&lt;EOF
-address=/#/192.168.4.1
-EOF'
-sudo systemctl restart dnsmasq</pre>
-  <p>Agora, quando um aluno conectar no WiFi e abrir qualquer página no navegador, será redirecionado automaticamente para a estação.</p>
-  <h3>5.3 — Testar o hotspot</h3>
-  <ol class="steps">
-    <li>No celular, procurar a rede <strong>EstacaoMeteo</strong>.</li>
-    <li>Conectar com a senha <code>meteorologia</code>.</li>
-    <li>Abrir o navegador — deve redirecionar para a Orange Pi.</li>
-  </ol>
-</section>
-
-<!-- ═══ 6. SERVIDOR ═══ -->
-<section class="section" id="servidor">
-  <div class="section-header">
-    <span class="section-number">6</span>
-    <h2>Instalar o servidor web</h2>
-  </div>
-  <h3>6.1 — Copiar os arquivos</h3>
-  <p>Transferir a pasta <code>estacao-meteorologica/</code> para a Orange Pi:</p>
-  <pre># Do seu computador, via SCP:
-scp -r estacao-meteorologica/ usuario@192.168.4.1:~/
-
-# Ou via pendrive:
-cp -r /media/pendrive/estacao-meteorologica ~/</pre>
-  <h3>6.2 — Testar manualmente</h3>
-  <pre>cd ~/estacao-meteorologica
-python3 app.py</pre>
-  <p>Deve exibir: <code>Acesse: http://192.168.4.1:5000</code>. Abrir no celular para verificar.</p>
-  <h3>6.3 — Iniciar automaticamente no boot</h3>
-  <pre>sudo bash -c 'cat > /etc/systemd/system/estacao.service &lt;&lt;EOF
-[Unit]
-Description=Estacao Meteorologica Educacional
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/home/usuario/estacao-meteorologica
-ExecStart=/usr/bin/python3 app.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF'
-
-sudo systemctl daemon-reload
-sudo systemctl enable estacao
-sudo systemctl start estacao</pre>
-  <div class="alert">
-    <strong>Ajuste o caminho:</strong> substitua <code>/home/usuario/</code> pelo caminho real do seu usuário na Orange Pi.
-  </div>
-  <h3>6.4 — Endpoints da API</h3>
-  <div class="endpoint">
-    <span class="method method-post">POST</span>
-    <span class="endpoint-path">/api/dados</span>
-    <span class="endpoint-desc">Recebe leitura dos sensores</span>
-  </div>
-  <div class="endpoint">
-    <span class="method method-get">GET</span>
-    <span class="endpoint-path">/api/atual</span>
-    <span class="endpoint-desc">Última leitura</span>
-  </div>
-  <div class="endpoint">
-    <span class="method method-get">GET</span>
-    <span class="endpoint-path">/api/dados?horas=6</span>
-    <span class="endpoint-desc">Histórico das últimas N horas</span>
-  </div>
-  <div class="endpoint">
-    <span class="method method-get">GET</span>
-    <span class="endpoint-path">/api/estatisticas?horas=24</span>
-    <span class="endpoint-desc">Min, max e média do período</span>
-  </div>
-  <div class="endpoint">
-    <span class="method method-get">GET</span>
-    <span class="endpoint-path">/api/exportar?horas=24</span>
-    <span class="endpoint-desc">Download CSV para Excel</span>
-  </div>
-</section>
-
-<!-- ═══ 7. TESTAR ═══ -->
-<section class="section" id="testar">
-  <div class="section-header">
-    <span class="section-number">7</span>
-    <h2>Testar tudo junto</h2>
-  </div>
-  <h3>Sem o Heltec (simulador)</h3>
-  <p>O projeto inclui um simulador que gera dados realistas — ciclo diário típico do RS com variação de temperatura, umidade inversa, e pressão com ruído:</p>
-  <pre># Preencher 24h de dados de uma vez (instantâneo):
-python3 preencher_db.py
-
-# Simulação contínua (1 leitura por segundo):
-python3 simular.py
-
-# Simulação no ritmo real (1 por minuto):
-python3 simular.py --intervalo 60</pre>
-  <h3>Com o Heltec</h3>
-  <ol class="steps">
-    <li>Ligar a Orange Pi e esperar o boot (~30s).</li>
-    <li>Ligar o Heltec V4 — ele conecta automaticamente no WiFi <code>EstacaoMeteo</code>.</li>
-    <li>O display OLED mostra "WiFi OK" quando conectou.</li>
-    <li>Após a primeira leitura (60s), os dados aparecem na interface web.</li>
-    <li>Verificar pelo monitor serial (115200 baud) se os envios estão com <code>[OK]</code>.</li>
-  </ol>
-  <h3>Checklist de validação</h3>
-  <ol class="steps">
-    <li>WiFi <code>EstacaoMeteo</code> visível no celular?</li>
-    <li>Página abre ao conectar no WiFi?</li>
-    <li>Cards mostram valores numéricos (não "--")?</li>
-    <li>Gráficos populam ao selecionar período?</li>
-    <li>Link "Baixar CSV" gera arquivo?</li>
-    <li>Tendência de pressão aparece após acumular dados?</li>
-  </ol>
-</section>
-
-<!-- ═══ 8. AULA ═══ -->
-<section class="section" id="aula">
-  <div class="section-header">
-    <span class="section-number">8</span>
-    <h2>Uso em sala de aula</h2>
-  </div>
-  <h3>Roteiro de aula sugerido</h3>
-  <div class="subsection">
-    <div class="sub-label">Abertura — 10 min</div>
-    <p>Apresentar os componentes e explicar o fluxo de dados (sensor → microcontrolador → servidor → celular). Perguntar aos alunos o que acham que influencia a temperatura ao longo do dia e por que a umidade sobe quando a temperatura cai.</p>
-  </div>
-  <div class="subsection">
-    <div class="sub-label">Observação — 20 min</div>
-    <p>Os alunos conectam no WiFi <code>EstacaoMeteo</code> pelos celulares e exploram a interface: leitura atual, gráficos de diferentes períodos, tendência barométrica. Peça que anotem as leituras atuais e comparem com a sensação térmica percebida.</p>
-  </div>
-  <div class="subsection">
-    <div class="sub-label">Análise — 15 min</div>
-    <p>Cada grupo baixa o CSV e abre no Excel ou Google Sheets. Desafios possíveis: calcular a amplitude térmica do dia, identificar o horário mais quente, plotar um gráfico próprio, calcular a média móvel de pressão.</p>
-  </div>
-  <div class="subsection">
-    <div class="sub-label">Discussão — 10 min</div>
-    <p>Relacionar os dados com conceitos de ciências: por que a pressão cai antes da chuva? O que a umidade relativa do ar significa? Como uma frente fria aparece nos dados? Conectar com previsão do tempo e climatologia.</p>
-  </div>
-  <div class="tip">
-    <strong>Para turmas avançadas:</strong> deixar a estação coletando por uma semana e pedir que os alunos identifiquem a passagem de uma frente fria nos dados — queda de pressão + queda de temperatura + aumento de umidade é a assinatura clássica.
-  </div>
-  <h3>Cuidados práticos</h3>
-  <p>Ligar a Orange Pi 2–3 minutos antes da aula para dar tempo do boot e do hotspot subir. O Heltec pode ficar ligado continuamente por USB ou bateria LiPo. Se a interface não abrir, pedir para o aluno desligar os "dados móveis" no celular — alguns smartphones preferem a rede 4G ao WiFi sem internet.</p>
-</section>
-
-<!-- ═══ REFERÊNCIA ═══ -->
-<section class="section" id="referencia">
-  <div class="section-header">
-    <span class="section-number">→</span>
-    <h2>Referência rápida</h2>
-  </div>
-  <div style="overflow-x: auto;">
-  <table class="ref-table">
-    <tr><th colspan="2">Rede WiFi</th></tr>
-    <tr><td>SSID</td><td><code>EstacaoMeteo</code></td></tr>
-    <tr><td>Senha</td><td><code>meteorologia</code></td></tr>
-    <tr><td>IP do servidor</td><td><code>192.168.4.1</code></td></tr>
-    <tr><td>Interface web</td><td><code>http://192.168.4.1:5000</code></td></tr>
-    <tr><th colspan="2">Firmware Heltec V4</th></tr>
-    <tr><td>Placa no Arduino IDE</td><td>WiFi LoRa 32 (V3) / Wireless Shell (V3)</td></tr>
-    <tr><td>Velocidade serial</td><td><code>115200</code> baud</td></tr>
-    <tr><td>Intervalo de leitura</td><td>60 segundos (configurável)</td></tr>
-    <tr><td>BMP280 I2C</td><td><code>SDA=GPIO41</code> <code>SCL=GPIO42</code></td></tr>
-    <tr><td>DHT22</td><td><code>GPIO 7</code></td></tr>
-    <tr><th colspan="2">Orange Pi</th></tr>
-    <tr><td>Sistema</td><td>Armbian Bookworm</td></tr>
-    <tr><td>Servidor</td><td>Flask (Python 3)</td></tr>
-    <tr><td>Banco de dados</td><td>SQLite (<code>estacao.db</code>)</td></tr>
-    <tr><td>Serviço systemd</td><td><code>sudo systemctl status estacao</code></td></tr>
-    <tr><th colspan="2">Solução de problemas</th></tr>
-    <tr><td>WiFi não aparece</td><td><code>sudo systemctl restart hostapd</code></td></tr>
-    <tr><td>Página não abre</td><td><code>sudo systemctl status estacao</code></td></tr>
-    <tr><td>Sem dados</td><td><code>curl http://localhost:5000/api/atual</code></td></tr>
-    <tr><td>Reset do banco</td><td><code>rm estacao.db && sudo systemctl restart estacao</code></td></tr>
+<section id="materiais">
+  <h2>Materiais</h2>
+  <table>
+    <tr><th>Item</th><th>Qtd</th><th>Função</th></tr>
+    <tr><td>Heltec WiFi LoRa 32 V3/V4 (ESP32-S3 + SX1262 + OLED)</td><td>2</td><td>Um como nó remoto (sensores), outro como base (receptor)</td></tr>
+    <tr><td>BMP280</td><td>1</td><td>Pressão (300–1100 hPa) e temperatura, via I2C</td></tr>
+    <tr><td>DHT22</td><td>1</td><td>Umidade (0–100%) e temperatura, via GPIO digital</td></tr>
+    <tr><td>Orange Pi Zero 2W</td><td>1</td><td>Hotspot WiFi + servidor Flask</td></tr>
+    <tr><td>Cabo USB-C</td><td>1</td><td>Liga a Heltec base na Orange Pi</td></tr>
+    <tr><td>MicroSD (8GB+)</td><td>1</td><td>Sistema operacional da Orange Pi (Armbian)</td></tr>
   </table>
+</section>
+
+<section id="ligacoes">
+  <h2>Ligações elétricas</h2>
+  <p>Os sensores conectam <strong>só na Heltec #1 (nó remoto)</strong>. A Heltec #2 (base) não tem sensor nenhum — ela só recebe o rádio e passa pra Orange Pi via USB.</p>
+
+  <table>
+    <tr><th>Sensor</th><th>Pino</th><th>Heltec #1</th></tr>
+    <tr><td class="mono">BMP280 SDA</td><td>→</td><td class="mono">GPIO 41</td></tr>
+    <tr><td class="mono">BMP280 SCL</td><td>→</td><td class="mono">GPIO 42</td></tr>
+    <tr><td class="mono">DHT22 DATA</td><td>→</td><td class="mono">GPIO 7</td></tr>
+    <tr><td class="mono">Ambos VCC</td><td>→</td><td class="mono">3.3V</td></tr>
+    <tr><td class="mono">Ambos GND</td><td>→</td><td class="mono">GND</td></tr>
+  </table>
+
+  <div class="callout">
+    A Heltec #2 (base) não precisa de nenhuma ligação de sensor — só o cabo USB para a Orange Pi, que também a alimenta.
   </div>
 </section>
 
-<div class="guide-footer">
-  <div class="guide-footer-credit">
-    <strong>Professor Regente:</strong> Dr. José Ricardo Faccin · Turma 9º Ano — 2026<br>
-    Colégio Franciscano Cristo Rei · Marau, RS
-  </div>
-  <div class="guide-footer-tech">
-    Heltec V4 + Orange Pi Zero 2W + BMP280 + DHT22
-  </div>
-  <a class="back-link" href="https://github.com/faccin/estacao-meteorologica">← Voltar ao repositório</a>
-  <div class="guide-footer-bar"></div>
-</div>
+<section id="firmware">
+  <h2>Firmware</h2>
+  <p>São dois sketches diferentes — um para cada Heltec. As bibliotecas abaixo instalam-se pelo Gerenciador de Bibliotecas do Arduino IDE.</p>
 
-</div>
+  <div class="grid-2">
+    <div class="card">
+      <h4>📡 Heltec #1 — nó remoto</h4>
+      <p style="margin:0; font-size:.9rem;">Lê BMP280 + DHT22 a cada 60s, mostra no OLED e transmite via LoRa.</p>
+      <p class="mono" style="font-size:.82rem; margin:.6rem 0 0;">firmware/no_remoto_sensores/<br>no_remoto_sensores.ino</p>
+    </div>
+    <div class="card">
+      <h4>📥 Heltec #2 — base</h4>
+      <p style="margin:0; font-size:.9rem;">Escuta o rádio LoRa e repassa cada leitura recebida pela serial USB.</p>
+      <p class="mono" style="font-size:.82rem; margin:.6rem 0 0;">firmware/base_receptora/<br>base_receptora.ino</p>
+    </div>
+  </div>
+
+  <h3>Bibliotecas necessárias</h3>
+  <pre>Adafruit BMP280 Library
+Adafruit Unified Sensor
+DHT sensor library (Adafruit)
+RadioLib (Jan Gromeš)
+U8g2 (oliver)</pre>
+
+  <h3>Configuração no Arduino IDE</h3>
+  <p>Selecione a placa <strong>"WiFi LoRa 32 (V3)"</strong> mesmo tendo a V4 — o pacote de placas da Heltec ainda não separa uma entrada específica para a V4, mas o mapeamento de pinos é compatível.</p>
+
+  <div class="callout">
+    <strong>Frequência:</strong> os dois sketches usam <code class="inline">915.0</code> MHz — a faixa correta para uso no Brasil (ANATEL). Não altere sem necessidade, e mantenha o mesmo <em>spreading factor</em> (<code class="inline">LORA_SF</code>) nos dois firmwares, ou eles não vão se comunicar.
+  </div>
+</section>
+
+<section id="orangepi">
+  <h2>Orange Pi</h2>
+  <p>A Orange Pi cumpre três papéis: hotspot WiFi para os celulares, servidor Flask com o painel, e ponte entre a Heltec base (USB) e o banco de dados. O passo a passo completo de configuração do hotspot, do Flask e do serviço de leitura da serial está em <a href="https://github.com/faccin/estacao-meteorologica/blob/main/SETUP_ORANGE_PI.md">SETUP_ORANGE_PI.md</a>, incluindo os comandos exatos de hostapd e dnsmasq testados nesse hardware.</p>
+
+  <h3>Resumo</h3>
+  <table>
+    <tr><th>Item</th><th>Valor</th></tr>
+    <tr><td>SSID</td><td class="mono">EstacaoMeteo</td></tr>
+    <tr><td>Senha</td><td class="mono">12345678</td></tr>
+    <tr><td>IP da Orange Pi</td><td class="mono">192.168.4.1</td></tr>
+    <tr><td>Painel</td><td class="mono">http://192.168.4.1:5000</td></tr>
+  </table>
+
+  <div class="callout">
+    O hotspot e os serviços (Flask + leitor da serial) sobem sozinhos no boot — não é preciso conectar tela ou teclado depois da configuração inicial.
+  </div>
+</section>
+
+<section id="testar">
+  <h2>Testar sem hardware</h2>
+  <p>Antes de montar os sensores, dá para testar o painel inteiro com dados simulados:</p>
+  <pre>python3 preencher_db.py   # gera 24h de dados de uma vez
+python3 app.py            # sobe o servidor</pre>
+  <p>Acesse <code class="inline">http://192.168.4.1:5000</code> (ou <code class="inline">localhost:5000</code> se estiver testando no próprio computador) e confira se os gráficos de todos os períodos (1h, 3h, 6h, 12h, 24h) aparecem preenchidos.</p>
+</section>
+
+<section id="aula">
+  <h2>Uso em sala de aula</h2>
+  <ol>
+    <li>Ligue a Orange Pi — o hotspot <code class="inline">EstacaoMeteo</code> aparece em alguns segundos.</li>
+    <li>Ligue as duas Heltecs — o nó remoto começa a ler e transmitir, a base recebe e repassa.</li>
+    <li>Os alunos conectam o celular no WiFi e abrem <code class="inline">192.168.4.1:5000</code>.</li>
+    <li>O painel mostra os dados em tempo real, com histórico e exportação em CSV para os alunos analisarem em planilha.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <p><a href="https://github.com/faccin/estacao-meteorologica">← Voltar ao repositório</a></p>
+  <p>Colégio Franciscano Cristo Rei · Marau, RS</p>
+</footer>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('estacao-theme');
+  if (saved === 'dark') { root.setAttribute('data-theme', 'dark'); btn.textContent = '☀️ Claro'; }
+
+  btn.addEventListener('click', () => {
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      root.removeAttribute('data-theme');
+      btn.textContent = '🌙 Escuro';
+      localStorage.setItem('estacao-theme', 'light');
+    } else {
+      root.setAttribute('data-theme', 'dark');
+      btn.textContent = '☀️ Claro';
+      localStorage.setItem('estacao-theme', 'dark');
+    }
+  });
+</script>
 
 </body>
 </html>

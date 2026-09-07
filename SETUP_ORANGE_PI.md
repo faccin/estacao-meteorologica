@@ -1,46 +1,67 @@
-# Setup da Orange Pi Zero 2W — Estação Meteorológica Educacional
+# Configuração da Orange Pi Zero 2W
 
-## 1. Sistema operacional
-
-Gravar o **Armbian** (Debian Bookworm) no cartão microSD:
-- Download: https://www.armbian.com/orange-pi-zero-2w/
-- Gravar com balenaEtcher ou `dd`
-
-Primeiro boot: criar usuário, definir senha, conectar via Ethernet ou WiFi temporário para instalar pacotes.
+Este guia documenta os passos **testados e funcionando** para transformar a Orange Pi em um hotspot WiFi off-grid, rodando o servidor Flask da estação meteorológica. Sistema: Armbian (Debian trixie).
 
 ---
 
-## 2. Instalar dependências
+## 1. Acesso inicial
+
+Conecte um monitor + teclado USB (só na primeira vez) ou acesse via SSH se a Orange Pi já estiver em alguma rede. Usuário padrão do Armbian pede para criar login no primeiro boot.
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip hostapd dnsmasq
-pip3 install flask --break-system-packages
 ```
 
 ---
 
-## 3. Configurar o hotspot WiFi
+## 2. Hotspot WiFi (hostapd + dnsmasq)
 
-Os alunos vão conectar no WiFi da Orange Pi — sem precisar de internet.
+A Orange Pi usada aqui **não tem NetworkManager** nem `dhcpcd` — o gerenciamento de rede é via `netplan` + `systemd-networkd`. Os passos abaixo já contornam isso.
 
-### 3.1 — Configurar IP estático na interface WiFi
+### 2.1 Instalar os pacotes
 
-Editar `/etc/network/interfaces` (ou usar nmcli se o Armbian usar NetworkManager):
-
-```
-# /etc/network/interfaces (adicionar ao final)
-auto wlan0
-iface wlan0 inet static
-    address 192.168.4.1
-    netmask 255.255.255.0
+```bash
+sudo apt install hostapd dnsmasq -y
+sudo systemctl unmask hostapd
+sudo systemctl stop hostapd dnsmasq
 ```
 
-### 3.2 — hostapd (ponto de acesso)
+### 2.2 Desativar qualquer config de wifi-cliente existente
 
-Criar `/etc/hostapd/hostapd.conf`:
+Verifique se não há um arquivo netplan configurando a `wlan0` como cliente wifi (procurando por uma rede tipo `access-points:`):
 
+```bash
+grep -rl "wlan0" /etc/netplan/
 ```
+
+Se encontrar, comente ou apague o bloco `wifis: wlan0:` desse arquivo — ele vai brigar com o modo Access Point.
+
+### 2.3 IP estático na wlan0
+
+O netplan trata interfaces wifi de forma especial, então o truque é declarar a `wlan0` como se fosse uma interface `ethernets` — isso faz o `systemd-networkd` só atribuir o IP, sem tentar autenticar como cliente wifi (quem cuida do rádio é o hostapd).
+
+```bash
+sudo tee /etc/netplan/99-hotspot.yaml > /dev/null << 'EOF'
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    wlan0:
+      dhcp4: no
+      dhcp6: no
+      addresses:
+        - 192.168.4.1/24
+EOF
+
+sudo chmod 600 /etc/netplan/99-hotspot.yaml
+sudo netplan apply
+```
+
+### 2.4 Configurar o hostapd
+
+```bash
+sudo mkdir -p /etc/hostapd
+sudo tee /etc/hostapd/hostapd.conf > /dev/null << 'EOF'
 interface=wlan0
 driver=nl80211
 ssid=EstacaoMeteo
@@ -51,152 +72,121 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=meteorologia
+wpa_passphrase=12345678
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
+EOF
+
+sudo sed -i 's|#DAEMON_CONF=""|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
 ```
 
-Editar `/etc/default/hostapd` e definir:
-```
-DAEMON_CONF="/etc/hostapd/hostapd.conf"
-```
+> ⚠️ **Não inclua `wpa_pairwise=TKIP`** — esse protocolo é rejeitado por celulares Android mais recentes e impede a conexão. Use só `rsn_pairwise=CCMP`.
+> Troque `12345678` por outra senha se quiser, desde que tenha 8+ caracteres.
 
-### 3.3 — dnsmasq (DHCP para os alunos)
+### 2.5 Configurar o dnsmasq (DHCP)
 
-Fazer backup e criar novo `/etc/dnsmasq.conf`:
+**Importante:** o Armbian já vem com `systemd-resolved` ocupando a porta 53 (DNS). Por isso, desativamos a parte de DNS do dnsmasq e deixamos só o DHCP:
 
 ```bash
-sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
-```
-
-```
-# /etc/dnsmasq.conf
+sudo tee -a /etc/dnsmasq.conf > /dev/null << 'EOF'
 interface=wlan0
-dhcp-range=192.168.4.10,192.168.4.50,255.255.255.0,24h
-address=/#/192.168.4.1
+dhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h
+port=0
+EOF
 ```
 
-> A linha `address=/#/...` faz com que **qualquer URL** digitada no celular redirecione para a estação — os alunos não precisam lembrar o IP!
-
-### 3.4 — Ativar tudo
+### 2.6 Ativar tudo permanentemente
 
 ```bash
-sudo systemctl unmask hostapd
 sudo systemctl enable hostapd dnsmasq
-sudo systemctl start hostapd dnsmasq
+sudo systemctl start hostapd
+sudo systemctl start dnsmasq
 ```
+
+### 2.7 Confirmar
+
+```bash
+ip addr show wlan0        # deve mostrar 192.168.4.1/24
+sudo systemctl status hostapd dnsmasq --no-pager
+```
+
+No celular, a rede **EstacaoMeteo** deve aparecer disponível. Conecte com a senha configurada — o problema mais comum se não conectar é o DHCP não estar de pé (`systemctl status dnsmasq`) ou a interface sem carrier (isso se resolve sozinho assim que o hostapd sobe e coloca a wlan0 em modo AP).
 
 ---
 
-## 4. Copiar o projeto
+## 3. Servidor Flask
 
-Transferir a pasta `estacao-meteorologica/` para a Orange Pi (via SCP, pendrive, ou git):
-
-```bash
-scp -r estacao-meteorologica/ usuario@192.168.x.x:~/
-```
-
----
-
-## 5. Rodar automaticamente no boot
-
-Criar o serviço systemd:
+### 3.1 Copiar os arquivos do projeto
 
 ```bash
-sudo nano /etc/systemd/system/estacao.service
+git clone https://github.com/faccin/estacao-meteorologica.git
+cd estacao-meteorologica
+pip3 install flask pyserial requests --break-system-packages
 ```
 
-```ini
+### 3.2 Testar sem hardware
+
+```bash
+python3 preencher_db.py   # gera 24h de dados simulados
+python3 app.py
+```
+
+Acesse `http://192.168.4.1:5000` de um dispositivo conectado no hotspot.
+
+### 3.3 Subir automaticamente no boot
+
+```bash
+sudo tee /etc/systemd/system/estacao.service > /dev/null << EOF
 [Unit]
-Description=Estação Meteorológica Educacional
+Description=Estacao Meteorologica - Servidor Flask
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/usuario/estacao-meteorologica
+WorkingDirectory=$(pwd)
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-```
+EOF
 
-Ativar:
-
-```bash
 sudo systemctl daemon-reload
-sudo systemctl enable estacao
-sudo systemctl start estacao
+sudo systemctl enable --now estacao.service
 ```
 
 ---
 
-## 6. Conexão do Heltec V4
+## 4. Leitor da base LoRa (recebe os dados dos sensores)
 
-O Heltec envia dados via HTTP POST para `http://192.168.4.1:5000/api/dados`.
-
-**Opção A — WiFi direto:**
-O Heltec conecta no hotspot da Orange Pi via WiFi e faz POST pela rede.
-
-**Opção B — USB Serial:**
-O Heltec conecta via USB na Orange Pi. Um script lê a serial e posta:
-
-```python
-# serial_bridge.py
-import serial, json, urllib.request, time
-
-ser = serial.Serial('/dev/ttyUSB0', 115200)
-
-while True:
-    linha = ser.readline().decode().strip()
-    try:
-        dados = json.loads(linha)
-        payload = json.dumps(dados).encode()
-        req = urllib.request.Request(
-            'http://localhost:5000/api/dados',
-            data=payload,
-            headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(req)
-        print(f"OK: {dados}")
-    except Exception as e:
-        print(f"Erro: {e}")
-```
-
----
-
-## 7. Uso em sala de aula
-
-1. Ligar a Orange Pi (alimentação USB-C, 5V/2A)
-2. Esperar ~30 segundos para o boot
-3. Os alunos conectam no WiFi **EstacaoMeteo** (senha: `meteorologia`)
-4. Abrem qualquer página no navegador → redirecionados para a estação
-5. Dados em tempo real, gráficos e exportação CSV disponíveis
-
-### Para testar sem o Heltec:
+A Heltec "base" fica conectada por USB na Orange Pi e repassa os dados recebidos via LoRa como linhas JSON na serial. O script `leitor_serial_orangepi.py` lê isso e envia para o Flask.
 
 ```bash
-python3 simular.py --rapido      # preenche 24h de dados
-python3 simular.py               # simula leituras contínuas
+sudo systemctl enable --now estacao-lora.service
+```
+
+Verifique os logs para confirmar que está recebendo dados:
+
+```bash
+sudo journalctl -u estacao-lora -f
 ```
 
 ---
 
-## Rede WiFi
+## 5. Uso 100% sem tela (opcional)
 
-| Parâmetro | Valor |
-|-----------|-------|
-| SSID | EstacaoMeteo |
-| Senha | meteorologia |
-| IP do servidor | 192.168.4.1 |
-| URL da interface | http://192.168.4.1:5000 |
+Depois de confirmar que tudo sobe sozinho no boot, dá para desativar a tela de login no console local (o acesso continua funcionando por SSH ou pela própria estação):
 
----
+```bash
+sudo systemctl disable getty@tty1.service
+```
 
-## Solução de problemas
+## 6. Desligar com segurança
 
-- **Alunos não encontram a rede:** `sudo systemctl restart hostapd`
-- **Página não abre:** `sudo systemctl status estacao` para ver logs
-- **Dados não aparecem:** verificar se o Heltec está enviando com `curl http://localhost:5000/api/atual`
+```bash
+sudo shutdown -h now
+```
+
+Nunca desconecte a alimentação sem rodar esse comando antes — pode corromper o cartão SD/eMMC.
