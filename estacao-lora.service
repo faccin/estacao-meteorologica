@@ -1,0 +1,15 @@
+[Unit]
+Description=Leitor Serial LoRa - Estacao Meteorologica
+After=network.target estacao.service
+Requires=estacao.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/faccin/estacao-meteorologica
+ExecStart=/usr/bin/python3 leitor_serial_orangepi.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
