@@ -1,24 +1,27 @@
 """
 Estação Meteorológica Educacional — Backend
 =============================================
-Servidor Flask que recebe dados dos sensores (Heltec V4),
-armazena em SQLite e serve uma interface web para os alunos.
+Servidor Flask que recebe dados dos sensores (Heltec, via LoRa + serial
+ou WiFi direto), armazena em SQLite e serve uma interface web para os alunos.
 
 Uso:
     python app.py
 
-O Heltec envia dados via HTTP POST para /api/dados com JSON:
-    {"temperatura": 25.3, "umidade": 72.1, "pressao": 1013.25}
+O leitor da base LoRa (leitor_serial_orangepi.py) envia dados via
+HTTP POST para /api/dados com JSON:
+    {"temperatura": 25.3, "umidade": 72.1, "pressao": 1013.25, "uv_index": 4.2}
+
+O campo uv_index é opcional — leituras sem sensor UV continuam funcionando
+normalmente (o campo fica NULL no banco e "--" na interface).
 
 Os alunos acessam a interface conectando no hotspot WiFi
-da Orange Pi e abrindo http://192.168.4.1 no navegador.
+da Orange Pi e abrindo http://192.168.4.1:5000 no navegador.
 """
 
 import sqlite3
-import json
 import os
 from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 
 # ── Configuração ──────────────────────────────────────────────
 app = Flask(__name__, static_folder="static")
@@ -34,19 +37,33 @@ def conectar_db():
 
 
 def inicializar_db():
-    """Cria a tabela de leituras se não existir."""
+    """Cria a tabela de leituras se não existir, e migra bancos antigos
+    (sem a coluna uv_index) adicionando a coluna sem apagar dados."""
     conn = conectar_db()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS leituras (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp  TEXT    NOT NULL,
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp   TEXT    NOT NULL,
             temperatura REAL,
             umidade     REAL,
-            pressao     REAL
+            pressao     REAL,
+            uv_index    REAL
         )
     """)
+
+    # Migração: bancos criados antes do sensor UV existir não têm a coluna
+    colunas = [row["name"] for row in conn.execute("PRAGMA table_info(leituras)")]
+    if "uv_index" not in colunas:
+        conn.execute("ALTER TABLE leituras ADD COLUMN uv_index REAL")
+        print("[migração] Coluna uv_index adicionada ao banco existente")
+
     conn.commit()
     conn.close()
+
+
+def _round_ou_none(valor, casas=1):
+    """Arredonda com segurança quando o valor pode ser None (sem sensor UV)."""
+    return round(valor, casas) if valor is not None else None
 
 
 # ── Rotas da API ──────────────────────────────────────────────
@@ -55,28 +72,31 @@ def inicializar_db():
 def receber_dados():
     """
     Recebe uma leitura dos sensores via POST JSON.
-    Campos esperados: temperatura, umidade, pressao
+    Campos obrigatórios: temperatura, umidade, pressao
+    Campo opcional: uv_index (não quebra se o firmware não enviar)
     """
     dados = request.get_json(force=True)
 
     temperatura = dados.get("temperatura")
     umidade = dados.get("umidade")
     pressao = dados.get("pressao")
+    uv_index = dados.get("uv_index")  # opcional
 
     if temperatura is None or umidade is None or pressao is None:
         return jsonify({"erro": "Campos obrigatórios: temperatura, umidade, pressao"}), 400
 
-    agora = datetime.now().isoformat(timespec="seconds")
+    # Aceita timestamp opcional (usado pelo simulador no modo --rapido)
+    timestamp = dados.get("timestamp") or datetime.now().isoformat(timespec="seconds")
 
     conn = conectar_db()
     conn.execute(
-        "INSERT INTO leituras (timestamp, temperatura, umidade, pressao) VALUES (?, ?, ?, ?)",
-        (agora, temperatura, umidade, pressao),
+        "INSERT INTO leituras (timestamp, temperatura, umidade, pressao, uv_index) VALUES (?, ?, ?, ?, ?)",
+        (timestamp, temperatura, umidade, pressao, uv_index),
     )
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "ok", "timestamp": agora}), 201
+    return jsonify({"status": "ok", "timestamp": timestamp}), 201
 
 
 @app.route("/api/dados", methods=["GET"])
@@ -112,6 +132,7 @@ def listar_dados():
             "temperatura": r["temperatura"],
             "umidade": r["umidade"],
             "pressao": r["pressao"],
+            "uv_index": r["uv_index"],
         }
         for r in rows
     ]
@@ -136,6 +157,7 @@ def leitura_atual():
         "temperatura": row["temperatura"],
         "umidade": row["umidade"],
         "pressao": row["pressao"],
+        "uv_index": row["uv_index"],
     })
 
 
@@ -160,7 +182,10 @@ def estatisticas():
             AVG(umidade)        AS umid_media,
             MIN(pressao)        AS pres_min,
             MAX(pressao)        AS pres_max,
-            AVG(pressao)        AS pres_media
+            AVG(pressao)        AS pres_media,
+            MIN(uv_index)       AS uv_min,
+            MAX(uv_index)       AS uv_max,
+            AVG(uv_index)       AS uv_media
         FROM leituras
         WHERE timestamp >= ?
     """, (desde,)).fetchone()
@@ -187,6 +212,12 @@ def estatisticas():
             "max": round(row["pres_max"], 1),
             "media": round(row["pres_media"], 1),
         },
+        # Fica None (null no JSON) se nenhuma leitura tiver sensor UV ainda
+        "uv_index": {
+            "min": _round_ou_none(row["uv_min"]),
+            "max": _round_ou_none(row["uv_max"]),
+            "media": _round_ou_none(row["uv_media"]),
+        },
     })
 
 
@@ -201,16 +232,16 @@ def exportar_csv():
 
     conn = conectar_db()
     rows = conn.execute(
-        "SELECT timestamp, temperatura, umidade, pressao FROM leituras WHERE timestamp >= ? ORDER BY id ASC",
+        "SELECT timestamp, temperatura, umidade, pressao, uv_index FROM leituras WHERE timestamp >= ? ORDER BY id ASC",
         (desde,),
     ).fetchall()
     conn.close()
 
-    linhas = ["timestamp,temperatura_C,umidade_%,pressao_hPa"]
+    linhas = ["timestamp,temperatura_C,umidade_%,pressao_hPa,indice_uv"]
     for r in rows:
-        linhas.append(f'{r["timestamp"]},{r["temperatura"]},{r["umidade"]},{r["pressao"]}')
+        uv = r["uv_index"] if r["uv_index"] is not None else ""
+        linhas.append(f'{r["timestamp"]},{r["temperatura"]},{r["umidade"]},{r["pressao"]},{uv}')
 
-    from flask import Response
     return Response(
         "\n".join(linhas),
         mimetype="text/csv",

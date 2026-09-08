@@ -187,8 +187,8 @@
 
       <rect class="box" x="10" y="70" width="110" height="70" rx="8"/>
       <text class="lbl" x="65" y="95" text-anchor="middle">Sensores</text>
-      <text class="sub" x="65" y="112" text-anchor="middle">BMP280</text>
-      <text class="sub" x="65" y="126" text-anchor="middle">DHT22</text>
+      <text class="sub" x="65" y="112" text-anchor="middle">BMP280 / DHT22</text>
+      <text class="sub" x="65" y="126" text-anchor="middle">GUVA-S12SD</text>
 
       <line class="arrow" x1="120" y1="105" x2="155" y2="105"/>
       <text class="tag" x="122" y="98">I2C/GPIO</text>
@@ -238,6 +238,7 @@
     <tr><td>Heltec WiFi LoRa 32 V3/V4 (ESP32-S3 + SX1262 + OLED)</td><td>2</td><td>Um como nó remoto (sensores), outro como base (receptor)</td></tr>
     <tr><td>BMP280</td><td>1</td><td>Pressão (300–1100 hPa) e temperatura, via I2C</td></tr>
     <tr><td>DHT22</td><td>1</td><td>Umidade (0–100%) e temperatura, via GPIO digital</td></tr>
+    <tr><td>GUVA-S12SD</td><td>1</td><td>Índice UV, via saída analógica</td></tr>
     <tr><td>Orange Pi Zero 2W</td><td>1</td><td>Hotspot WiFi + servidor Flask</td></tr>
     <tr><td>Cabo USB-C</td><td>1</td><td>Liga a Heltec base na Orange Pi</td></tr>
     <tr><td>MicroSD (8GB+)</td><td>1</td><td>Sistema operacional da Orange Pi (Armbian)</td></tr>
@@ -253,8 +254,9 @@
     <tr><td class="mono">BMP280 SDA</td><td>→</td><td class="mono">GPIO 41</td></tr>
     <tr><td class="mono">BMP280 SCL</td><td>→</td><td class="mono">GPIO 42</td></tr>
     <tr><td class="mono">DHT22 DATA</td><td>→</td><td class="mono">GPIO 7</td></tr>
-    <tr><td class="mono">Ambos VCC</td><td>→</td><td class="mono">3.3V</td></tr>
-    <tr><td class="mono">Ambos GND</td><td>→</td><td class="mono">GND</td></tr>
+    <tr><td class="mono">GUVA-S12SD OUT</td><td>→</td><td class="mono">GPIO 4</td></tr>
+    <tr><td class="mono">Todos VCC</td><td>→</td><td class="mono">3.3V</td></tr>
+    <tr><td class="mono">Todos GND</td><td>→</td><td class="mono">GND</td></tr>
   </table>
 
   <div class="callout">

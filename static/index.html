@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Estação Meteorológica — Cristo Rei</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<script src="/static/vendor/chart.umd.js"></script>
 <style>
 :root {
   --cr-navy: #1b3a6b;
@@ -20,9 +20,11 @@
   --temp-color: #d04040;
   --umid-color: #2874a6;
   --pres-color: #1e8449;
+  --uv-color: #b8860b;
   --temp-bg: #fef5f5;
   --umid-bg: #eef6fb;
   --pres-bg: #eef8f0;
+  --uv-bg: #fdf8ec;
   --shadow: 0 2px 6px rgba(27,58,107,0.08);
 }
 
@@ -95,11 +97,14 @@ body {
 /* ── Cards de leitura atual ─────────────────────────── */
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
   padding: 0.75rem;
   max-width: 800px;
   margin: 0 auto;
+}
+@media (max-width: 480px) {
+  .cards, .stats { grid-template-columns: repeat(2, 1fr); }
 }
 
 .card {
@@ -123,11 +128,13 @@ body {
 .card.umid .card-value { color: var(--umid-color); }
 .card.pres { border-top: 3px solid var(--pres-color); background: var(--pres-bg); }
 .card.pres .card-value { color: var(--pres-color); }
+.card.uv { border-top: 3px solid var(--uv-color); background: var(--uv-bg); }
+.card.uv .card-value { color: var(--uv-color); }
 
 /* ── Estatísticas ───────────────────────────────────── */
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
   padding: 0 0.75rem;
   max-width: 800px;
@@ -164,6 +171,11 @@ body {
   padding: 1rem;
   margin-bottom: 0.75rem;
   box-shadow: var(--shadow);
+  position: relative;
+}
+.chart-wrap {
+  position: relative;
+  height: 180px;
 }
 .chart-title {
   font-size: 0.85rem;
@@ -173,7 +185,6 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
-canvas { width: 100% !important; }
 
 /* ── Controles ──────────────────────────────────────── */
 .controls {
@@ -275,6 +286,12 @@ canvas { width: 100% !important; }
     <div class="card-value" id="presAtual">--</div>
     <div class="card-unit">hPa</div>
   </div>
+  <div class="card uv">
+    <div class="card-icon">☀️</div>
+    <div class="card-label">Índice UV</div>
+    <div class="card-value" id="uvAtual">--</div>
+    <div class="card-unit">UVI</div>
+  </div>
 </div>
 
 <!-- Min/Max (24h) -->
@@ -300,6 +317,13 @@ canvas { width: 100% !important; }
       <span>↑ <span id="presMax">--</span></span>
     </div>
   </div>
+  <div class="stat-box">
+    <div>UV 24h</div>
+    <div class="min-max">
+      <span>↓ <span id="uvMin">--</span></span>
+      <span>↑ <span id="uvMax">--</span></span>
+    </div>
+  </div>
 </div>
 
 <!-- Tendência de pressão -->
@@ -323,15 +347,19 @@ canvas { width: 100% !important; }
 <div class="chart-section">
   <div class="chart-container">
     <div class="chart-title">🌡️ Temperatura (°C)</div>
-    <canvas id="chartTemp" height="180"></canvas>
+    <div class="chart-wrap"><canvas id="chartTemp"></canvas></div>
   </div>
   <div class="chart-container">
     <div class="chart-title">💧 Umidade (%)</div>
-    <canvas id="chartUmid" height="180"></canvas>
+    <div class="chart-wrap"><canvas id="chartUmid"></canvas></div>
   </div>
   <div class="chart-container">
     <div class="chart-title">📊 Pressão (hPa)</div>
-    <canvas id="chartPres" height="180"></canvas>
+    <div class="chart-wrap"><canvas id="chartPres"></canvas></div>
+  </div>
+  <div class="chart-container">
+    <div class="chart-title">☀️ Índice UV</div>
+    <div class="chart-wrap"><canvas id="chartUv"></canvas></div>
   </div>
 </div>
 
@@ -347,7 +375,7 @@ canvas { width: 100% !important; }
 <script>
 // ── Estado ────────────────────────────────────────────
 let periodoHoras = 1;
-let chartTemp = null, chartUmid = null, chartPres = null;
+let chartTemp = null, chartUmid = null, chartPres = null, chartUv = null;
 
 // ── Gráficos (só se Chart.js carregou) ───────────────
 try {
@@ -385,6 +413,7 @@ try {
     chartTemp = criarChart('chartTemp', '#d04040', 'Temperatura');
     chartUmid = criarChart('chartUmid', '#2874a6', 'Umidade');
     chartPres = criarChart('chartPres', '#1e8449', 'Pressão');
+    chartUv = criarChart('chartUv', '#b8860b', 'Índice UV');
   }
 } catch (e) { console.warn('Chart.js não disponível:', e); }
 
@@ -404,6 +433,8 @@ async function atualizarAtual() {
     document.getElementById('tempAtual').textContent = d.temperatura.toFixed(1);
     document.getElementById('umidAtual').textContent = d.umidade.toFixed(1);
     document.getElementById('presAtual').textContent = d.pressao.toFixed(1);
+    document.getElementById('uvAtual').textContent =
+      (d.uv_index != null) ? d.uv_index.toFixed(1) : '--';
 
     document.getElementById('statusDot').classList.add('online');
     document.getElementById('statusText').textContent =
@@ -427,6 +458,11 @@ async function atualizarEstatisticas() {
     document.getElementById('umidMax').textContent = d.umidade.max + '%';
     document.getElementById('presMin').textContent = d.pressao.min;
     document.getElementById('presMax').textContent = d.pressao.max;
+
+    if (d.uv_index) {
+      document.getElementById('uvMin').textContent = d.uv_index.min;
+      document.getElementById('uvMax').textContent = d.uv_index.max;
+    }
   } catch {}
 }
 
@@ -441,6 +477,7 @@ async function atualizarGraficos() {
     const temps = dados.map(d => d.temperatura);
     const umids = dados.map(d => d.umidade);
     const press = dados.map(d => d.pressao);
+    const uvs = dados.map(d => d.uv_index);
 
     if (chartTemp) {
       chartTemp.data.labels = labels;
@@ -458,6 +495,12 @@ async function atualizarGraficos() {
       chartPres.data.labels = labels;
       chartPres.data.datasets[0].data = press;
       chartPres.update('none');
+    }
+
+    if (chartUv) {
+      chartUv.data.labels = labels;
+      chartUv.data.datasets[0].data = uvs;
+      chartUv.update('none');
     }
 
     // Tendência de pressão (últimas 3h vs última leitura)

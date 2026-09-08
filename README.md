@@ -34,6 +34,7 @@ Dois módulos Heltec se comunicam por rádio **LoRa** (915 MHz), não por WiFi. 
 | 2× Heltec WiFi LoRa 32 V3/V4 (ESP32-S3 + SX1262 + OLED) | Nó remoto (sensores + transmissão) e base (recepção) |
 | BMP280 | Sensor I2C — pressão (300–1100 hPa) e temperatura |
 | DHT22 | Sensor digital — umidade (0–100%) e temperatura |
+| GUVA-S12SD | Sensor analógico — índice UV |
 | Orange Pi Zero 2W | Hotspot WiFi + servidor Flask + SQLite |
 | Cabo USB-C | Liga a Heltec base na Orange Pi |
 
@@ -63,7 +64,7 @@ Para o fluxo completo com hardware real, siga o **[guia de montagem](https://fac
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `POST` | `/api/dados` | Recebe uma leitura (JSON: `temperatura`, `umidade`, `pressao`, `timestamp` opcional) |
+| `POST` | `/api/dados` | Recebe uma leitura (JSON: `temperatura`, `umidade`, `pressao`, `uv_index` opcional, `timestamp` opcional) |
 | `GET` | `/api/atual` | Última leitura |
 | `GET` | `/api/dados?horas=6` | Histórico das últimas N horas |
 | `GET` | `/api/estatisticas?horas=24` | Mínimo, máximo e média do período |
